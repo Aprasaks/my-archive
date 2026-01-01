@@ -21,7 +21,7 @@ export default function Header() {
           className="flex items-center gap-3 transition-opacity hover:opacity-80"
         >
           <CubeLogo />
-          <span className="font-cookie pt-1 text-2xl font-bold tracking-tight text-slate-800">
+          <span className="font-cookie pt-1 text-2xl tracking-tight text-slate-800">
             정보집합체
           </span>
         </Link>
