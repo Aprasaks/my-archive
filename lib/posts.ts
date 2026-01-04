@@ -158,3 +158,39 @@ export async function getPostData(slug: string): Promise<PostDetail> {
     type: 'Markdown',
   };
 }
+
+// lib/posts.ts 맨 아래에 추가
+
+/**
+ * 4. 전체 파일 목록 가져오기 (전체 검색용)
+ * posts 폴더 내의 모든 .md 파일을 찾아서 반환합니다.
+ */
+export function getAllFiles(dirPath: string = postsDirectory): PostItem[] {
+  let results: PostItem[] = [];
+  const list = fs.readdirSync(dirPath, { withFileTypes: true });
+
+  list.forEach((file) => {
+    const fullPath = path.join(dirPath, file.name);
+    if (file.isDirectory()) {
+      // 폴더면 재귀적으로 파고들기
+      results = results.concat(getAllFiles(fullPath));
+    } else if (file.isFile() && file.name.endsWith('.md')) {
+      // 파일이면 목록에 추가
+      const content = fs.readFileSync(fullPath, 'utf8');
+      const { data } = matter(content);
+      // 카테고리(폴더명) 추출
+      const category = path.basename(dirPath);
+
+      results.push({
+        slug: file.name.replace('.md', ''),
+        title: data.title || file.name.replace('.md', ''),
+        date: data.date ? data.date.toString() : '-',
+        tags: data.tags || [],
+        category: category === 'posts' ? 'Root' : category,
+        type: 'Markdown',
+      });
+    }
+  });
+
+  return results;
+}
