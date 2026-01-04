@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@plugin '@tailwindcss/typography';
 
 /* 1. 쿠키런 폰트 정의 (CDN) */
 @font-face {
