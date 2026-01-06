@@ -1,6 +1,10 @@
-import React, { Suspense } from 'react'; // 1. Suspense 불러오기
+import React, { Suspense } from 'react';
 import { getFilesFromPath, getAllFiles } from '@/lib/posts';
 import ArchiveMain from '@/components/archive/ArchiveMain';
+
+// ✅ 이 한 줄이 배포 에러를 없애주는 핵심 치트키야!
+// "이 페이지는 들어올 때마다 새로 그려줘 (미리 빌드 X)" 라는 뜻
+export const dynamic = 'force-dynamic';
 
 // Next.js 15: searchParams는 Promise
 type SearchParams = Promise<{ path?: string }>;
@@ -13,14 +17,10 @@ export default async function ArchivePage({
   const resolvedParams = await searchParams;
   const currentPath = resolvedParams.path || '';
 
-  // 1. 현재 폴더에 있는 파일
   const currentFiles = getFilesFromPath(currentPath);
-
-  // 2. 전체 파일 (검색용)
   const allFiles = getAllFiles();
 
   return (
-    // 3. Suspense로 감싸서 빌드 에러 방지 (fallback은 로딩 중에 보여줄 UI)
     <div className="h-full font-sans text-gray-800">
       <Suspense fallback={<div className="p-8 text-gray-400">Loading...</div>}>
         <ArchiveMain currentFiles={currentFiles} allFiles={allFiles} />
