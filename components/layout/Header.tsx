@@ -35,6 +35,12 @@ export default function Header() {
             Archive
           </Link>
           <Link
+            href="/exam"
+            className="text-sm font-medium text-slate-600 transition-colors hover:text-sky-600"
+          >
+            Exam
+          </Link>
+          <Link
             href="/as"
             className="text-sm font-medium text-slate-600 transition-colors hover:text-sky-600"
           >
