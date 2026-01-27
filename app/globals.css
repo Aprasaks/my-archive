@@ -30,3 +30,18 @@
 .font-cookie {
   font-family: 'CookieRun', sans-serif;
 }
+
+@theme {
+  /* 1. 애니메이션 이름과 동작 설정 (6초 동안 무한 반복) */
+  --animate-aurora-text: aurora-text 6s linear infinite;
+
+  /* 2. 키프레임 설정 (배경 위치를 이동시킴) */
+  @keyframes aurora-text {
+    0% {
+      background-position: 0% center;
+    }
+    100% {
+      background-position: 200% center;
+    }
+  }
+}
