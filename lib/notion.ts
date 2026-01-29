@@ -150,3 +150,23 @@ export async function getAllItems(): Promise<Post[]> {
 
   return items;
 }
+
+export async function getPageBySlug(slug: string): Promise<Post | null> {
+  const allPosts = await getAllItems();
+  const post = allPosts.find((p) => p.slug === slug);
+  return post || null;
+}
+
+// ---------------------------------------------------------
+// [추가 기능] 페이지의 본문(블록) 내용 가져오기
+// ---------------------------------------------------------
+export async function getPageContent(pageId: string) {
+  // 노션 페이지는 '블록'들의 집합이야. (문단, 제목, 코드 등)
+  // v5 버전 호환을 위해 any로 우회해서 호출
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const response = await (notion as any).blocks.children.list({
+    block_id: pageId,
+  });
+
+  return response.results;
+}

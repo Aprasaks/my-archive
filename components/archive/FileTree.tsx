@@ -75,7 +75,7 @@ function TreeNode({ item, depth = 0 }: { item: TreeItem; depth?: number }) {
                 <TreeNode key={child.id} item={child} depth={depth + 1} />
               ))
             ) : (
-              <div className="py-1 pl-[40px] text-xs text-slate-400 italic">
+              <div className="py-1 pl-10 text-xs text-slate-400 italic">
                 (비어있음)
               </div>
             )}
@@ -108,7 +108,7 @@ export default function FileTree({ items }: { items: Post[] }) {
   const treeData = buildTree(items);
 
   return (
-    <div className="mx-auto min-h-[400px] w-full max-w-3xl rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+    <div className="mx-auto min-h-96 w-full max-w-3xl rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
       <h2 className="mb-6 border-b border-slate-100 px-2 pb-4 text-lg font-bold text-slate-800">
         📂 Dechive Explorer
       </h2>
