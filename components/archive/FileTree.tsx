@@ -1,124 +1,220 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  Folder,
-  FolderOpen,
-  FileText,
-  ChevronRight,
-  ChevronDown,
-} from 'lucide-react';
 import Link from 'next/link';
-import type { Post } from '@/lib/notion'; // 우리가 만든 타입 가져오기
+import { Post } from '@/lib/notion';
 
-// 트리 구조를 위한 타입 정의
-interface TreeItem extends Post {
-  children: TreeItem[];
-}
+// ---------------------------------------------------------
+// [아이콘 모음] (따로 파일 안 만들고 여기에 포함시켰어)
+// ---------------------------------------------------------
+const Icons = {
+  Folder: () => (
+    <svg
+      className="mr-2 h-5 w-5 text-yellow-400"
+      fill="currentColor"
+      viewBox="0 0 20 20"
+    >
+      <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+    </svg>
+  ),
+  File: () => (
+    <svg
+      className="mr-2 h-5 w-5 text-slate-400"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+      />
+    </svg>
+  ),
+  Search: () => (
+    <svg
+      className="h-4 w-4 text-slate-400"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+      />
+    </svg>
+  ),
+  ChevronRight: ({ isOpen }: { isOpen: boolean }) => (
+    <svg
+      className={`mr-1 h-4 w-4 text-slate-400 transition-transform ${isOpen ? 'rotate-90' : ''}`}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M9 5l7 7-7 7"
+      />
+    </svg>
+  ),
+};
 
-// 1. 평평한 데이터를 트리로 바꾸는 마법 함수
-function buildTree(items: Post[]): TreeItem[] {
-  const itemMap: { [key: string]: TreeItem } = {};
-  const roots: TreeItem[] = [];
+// ---------------------------------------------------------
+// [트리 아이템] 폴더나 파일을 그리는 부품
+// ---------------------------------------------------------
+function TreeItem({
+  item,
+  allPosts,
+  depth = 0,
+}: {
+  item: Post;
+  allPosts: Post[];
+  depth?: number;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
 
-  // 모든 아이템을 맵에 등록 (children 배열 추가)
-  items.forEach((item) => {
-    itemMap[item.id] = { ...item, children: [] };
-  });
+  // 내 자식(하위 항목)들 찾기
+  const children = allPosts.filter((p) => p.parentId === item.id);
+  const hasChildren = children.length > 0;
 
-  // 부모-자식 연결하기
-  items.forEach((item) => {
-    const node = itemMap[item.id];
-    if (item.parentId && itemMap[item.parentId]) {
-      // 부모가 있으면 부모의 children에 들어감
-      itemMap[item.parentId].children.push(node);
-    } else {
-      // 부모가 없으면 최상위(Root)임
-      roots.push(node);
-    }
-  });
-
-  return roots;
-}
-
-// 2. 재귀적으로 폴더/파일을 그리는 컴포넌트
-function TreeNode({ item, depth = 0 }: { item: TreeItem; depth?: number }) {
-  const [isOpen, setIsOpen] = useState(false); // 폴더 열림/닫힘 상태
-  const isFolder = item.type === 'Folder';
-
-  // 들여쓰기 (깊어질수록 오른쪽으로 밀림)
-  const paddingLeft = depth * 20 + 12;
-
-  if (isFolder) {
+  // 1. 폴더인 경우
+  if (item.type === 'Folder') {
     return (
       <div className="select-none">
-        {/* 폴더 클릭 영역 */}
         <div
+          className="flex cursor-pointer items-center rounded-md px-2 py-2 text-sm transition-colors hover:bg-slate-100/80"
+          style={{ paddingLeft: `${depth * 12 + 8}px` }}
           onClick={() => setIsOpen(!isOpen)}
-          className="flex cursor-pointer items-center rounded-lg py-2 text-slate-700 transition-colors hover:bg-slate-50"
-          style={{ paddingLeft: `${paddingLeft}px` }}
         >
-          <span className="mr-2 text-slate-400">
-            {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          {/* 화살표 (자식 있을 때만) */}
+          <div className="mr-1 flex h-4 w-4 shrink-0 items-center justify-center">
+            {hasChildren && <Icons.ChevronRight isOpen={isOpen} />}
+          </div>
+          <Icons.Folder />
+          <span className="truncate font-medium text-slate-700">
+            {item.title}
           </span>
-          <span className="mr-2 text-yellow-500">
-            {isOpen ? <FolderOpen size={18} /> : <Folder size={18} />}
-          </span>
-          <span className="text-sm font-semibold">{item.title}</span>
         </div>
 
-        {/* 자식 아이템들 (열렸을 때만 보임) */}
+        {/* 자식 목록 (열렸을 때만 보임) */}
         {isOpen && (
-          <div className="animate-fade-in-down">
-            {item.children.length > 0 ? (
-              item.children.map((child) => (
-                <TreeNode key={child.id} item={child} depth={depth + 1} />
-              ))
-            ) : (
-              <div className="py-1 pl-10 text-xs text-slate-400 italic">
-                (비어있음)
-              </div>
-            )}
+          <div>
+            {children.map((child) => (
+              <TreeItem
+                key={child.id}
+                item={child}
+                allPosts={allPosts}
+                depth={depth + 1}
+              />
+            ))}
           </div>
         )}
       </div>
     );
   }
 
-  // 파일(Post)인 경우
+  // 2. 파일(글)인 경우
   return (
-    <Link
-      href={`/archive/${item.slug}`}
-      className="group flex cursor-pointer items-center rounded-lg py-2 text-slate-600 transition-colors hover:bg-blue-50"
-      style={{ paddingLeft: `${paddingLeft + 22}px` }} // 폴더보다 조금 더 들어감
-    >
-      <FileText
-        size={16}
-        className="mr-2 text-slate-400 group-hover:text-blue-500"
-      />
-      <span className="text-sm font-medium group-hover:text-blue-600">
-        {item.title}
-      </span>
+    <Link href={`/archive/${item.slug}`} className="block">
+      <div
+        className="group flex cursor-pointer items-center rounded-md px-2 py-2 text-sm transition-colors hover:bg-blue-50"
+        style={{ paddingLeft: `${depth * 12 + 28}px` }}
+      >
+        <Icons.File />
+        <span className="truncate text-slate-600 transition-colors group-hover:text-blue-600">
+          {item.title}
+        </span>
+      </div>
     </Link>
   );
 }
 
-// 3. 메인 컴포넌트
-export default function FileTree({ items }: { items: Post[] }) {
-  const treeData = buildTree(items);
+// ---------------------------------------------------------
+// [메인] FileTree 컴포넌트
+// ---------------------------------------------------------
+// 👇 [핵심 수정] posts = [] 기본값을 줘서 에러를 원천 차단!
+export default function FileTree({ posts = [] }: { posts: Post[] }) {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // 1. 최상위 폴더/파일만 추려내기 (부모가 없는 애들)
+  const rootItems = posts.filter((p) => !p.parentId);
+
+  // 2. 검색 로직 (검색어가 있으면 필터링)
+  const filteredPosts = searchTerm
+    ? posts.filter(
+        (p) =>
+          p.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
+          p.type === 'Post'
+      )
+    : [];
 
   return (
-    <div className="mx-auto min-h-96 w-full max-w-3xl rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-      <h2 className="mb-6 border-b border-slate-100 px-2 pb-4 text-lg font-bold text-slate-800">
-        📂 Dechive Explorer
-      </h2>
-      <div className="flex flex-col gap-1">
-        {treeData.map((node) => (
-          <TreeNode key={node.id} item={node} />
-        ))}
-        {treeData.length === 0 && (
-          <div className="py-10 text-center text-slate-400">
-            아직 노션에 발행된 글이 없습니다. 텅 비었어요! 🗑️
+    <div className="w-full">
+      {/* 🔍 검색창 영역 */}
+      <div className="group relative mb-6">
+        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+          <Icons.Search />
+        </div>
+        <input
+          type="text"
+          placeholder="검색하기..."
+          className="w-full rounded-lg border border-transparent bg-slate-100 py-2 pr-4 pl-9 text-sm transition-all outline-none placeholder:text-slate-400 focus:border-blue-500 focus:bg-white"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
+      {/* 🌲 목록 영역 */}
+      <div className="space-y-1">
+        {/* Case A: 검색 중일 때 */}
+        {searchTerm ? (
+          <div>
+            <h3 className="mb-2 px-2 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+              Search Results
+            </h3>
+            {filteredPosts.length > 0 ? (
+              filteredPosts.map((post) => (
+                <Link
+                  key={post.id}
+                  href={`/archive/${post.slug}`}
+                  className="block"
+                >
+                  <div className="flex items-center rounded-md px-2 py-2 transition-colors hover:bg-blue-50">
+                    <Icons.File />
+                    <div className="flex min-w-0 flex-col">
+                      <span className="truncate text-sm font-medium text-slate-700">
+                        {post.title}
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        {post.date.slice(0, 10)}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="py-8 text-center text-xs text-slate-400">
+                검색 결과가 없어요 😅
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Case B: 기본 트리 구조 */
+          <div>
+            {rootItems.length > 0 ? (
+              rootItems.map((item) => (
+                <TreeItem key={item.id} item={item} allPosts={posts} />
+              ))
+            ) : (
+              <div className="px-2 text-xs text-slate-400">
+                목록을 불러오는 중...
+              </div>
+            )}
           </div>
         )}
       </div>

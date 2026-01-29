@@ -1,28 +1,21 @@
-// app/archive/page.tsx
 import React from 'react';
-import { getAllItems } from '@/lib/notion';
 import FileTree from '@/components/archive/FileTree';
-
-export const revalidate = 60; // 60초마다 데이터 갱신 (ISR)
+import RequestPill from '@/components/archive/RequestPill'; // 👈 방금 만든 거 import
+import { getAllItems } from '@/lib/notion';
 
 export default async function ArchivePage() {
-  const items = await getAllItems();
+  const posts = await getAllItems();
 
   return (
-    <div className="min-h-screen bg-slate-50 px-6 pt-24 pb-20">
-      <div className="mx-auto max-w-4xl space-y-8">
-        {/* 헤더 */}
-        <div className="space-y-4 text-center">
-          <h1 className="text-4xl font-black tracking-tight text-slate-900">
-            Knowledge Archive
-          </h1>
-          <p className="text-lg text-slate-500">
-            노션에 기록된 지식의 파편들을 탐험해보세요.
-          </p>
-        </div>
+    <div className="flex min-h-[85vh] flex-col items-center justify-center p-4 md:p-8">
+      {/* 🌟 1. 오오라 카드 (트리) */}
+      <div className="mb-10 w-full max-w-2xl rounded-3xl border-2 border-blue-400/20 bg-white/80 p-6 shadow-[0_0_40px_-10px_rgba(96,165,255,0.3)] backdrop-blur-xl transition-all duration-500 hover:border-blue-400/40 hover:shadow-[0_0_60px_-5px_rgba(96,165,255,0.5)] md:p-8">
+        <FileTree posts={posts} />
+      </div>
 
-        {/* 트리 컴포넌트 */}
-        <FileTree items={items} />
+      {/* 💊 2. 요청하기 알약 (여기에 기능이 다 들어있음!) */}
+      <div>
+        <RequestPill />
       </div>
     </div>
   );
