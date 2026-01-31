@@ -16,16 +16,34 @@ export default function RequestPill() {
 
   // 전송 버튼 눌렀을 때
   const handleSubmit = async () => {
+    // 1. 빈 내용이면 무시
     if (!message.trim()) return;
 
+    // 2. 전송 중 상태로 변경 (로딩 빙글빙글 or 버튼 비활성)
     setStatus('sending');
 
-    // 👇 [나중에] 여기에 디스코드 웹훅 연결 코드를 넣으면 진짜로 날아감!
-    // 지금은 1.5초 뒤에 성공했다고 치자.
-    setTimeout(() => {
+    try {
+      // 3. ✨ [여기가 핵심!] 진짜 API로 편지 보내기
+      const response = await fetch('/api/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message }), // 형이 쓴 내용을 담아서 보냄
+      });
+
+      // 4. 서버가 "OK" 안 하면 에러 처리
+      if (!response.ok) {
+        throw new Error('전송 실패');
+      }
+
+      // 5. 성공 시 (화면을 성공 상태로 바꿈)
       setStatus('success');
       setMessage(''); // 입력창 초기화
-    }, 1500);
+    } catch (error) {
+      // 6. 실패 시
+      console.error(error);
+      alert('전송에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      setStatus('idle'); // 다시 원래대로
+    }
   };
 
   // 모달 닫기 (성공 상태 초기화)
