@@ -1,92 +1,98 @@
-# My Knowledge Archive
+# 🌌 Dechive (Developers' Archive)
 
-> **"검증된 지식만이 대체 불가능한 전문성을 만든다."**
+> **"기록되지 않는 성장은 증발한다."** > Notion을 CMS로 활용하여, 지식의 파편을 구조화된 아카이브로 전환하는 Next.js 기반의 지식 저장소 프로젝트입니다.
 
-<!-- > AI 활용 능력과 PM 역량을 겸비한 안전관리자가 되기 위한 개인화된 지식 저장소(Knowledge Archive) 구축 프로젝트입니다. -->
-
-## 1. Project Vision & Goals
-
-### Ultimate Goal
-
-**AI & PM 역량을 갖춘 스마트 안전관리자 (Smart Safety Manager)**
-본 프로젝트는 단순한 학습 기록용 웹사이트가 아닙니다. 방대한 산업안전 지식과 IT 기술(Docker, AI)을 융합하여, 현장에서 즉시 활용 가능한 **'오류 없는(Zero-Hallucination) 지식 베이스'**를 구축하는 것을 목표로 합니다.
-
-### Core Value
-
-- **Verification (검증):** 직접 학습하고 이해한 데이터만 시스템에 적재합니다.
-- **Structure (구조화):** 비정형 텍스트(교재, 법령)를 정형 데이터(JSON/DB)로 변환하여 관리합니다.
-- **Scalability (확장성):** 산업안전기사를 시작으로 개발, 경영 등 타 도메인으로 확장이 가능한 아키텍처를 지향합니다.
+![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.0-38B2AC?style=for-the-badge&logo=tailwind-css)
+![Notion](https://img.shields.io/badge/Notion_API-CMS-000000?style=for-the-badge&logo=notion)
+![Vercel](https://img.shields.io/badge/Vercel-Deploy-000000?style=for-the-badge&logo=vercel)
 
 ---
 
-## 2. Project Management Methodology
+## 1. Project Identity
 
-본 프로젝트는 1인 개발이지만, 엔터프라이즈급 PM 방법론을 적용하여 품질과 유지보수성을 보장합니다.
+### 🔭 Vision
 
-### Issue Driven Development (IDD)
+**"Zero-Hallucination Knowledge Base"** 단순한 블로그가 아닙니다. **검증된 지식(Notion DB)**만을 소스로 활용하여, 향후 AI 에이전트(RAG)가 신뢰할 수 있는 답변을 도출할 수 있도록 **데이터의 무결성**을 최우선으로 하는 아카이브를 구축합니다.
 
-- **선(先) 기획, 후(後) 개발:** 모든 작업은 GitHub Issue를 통해 목적(Why)과 할 일(To-Do)이 정의된 후 진행됩니다.
-- **추적성 확보:** 커밋 메시지에 이슈 번호를 명시하여, 특정 코드가 왜 작성되었는지에 대한 히스토리를 관리합니다.
+### 💎 Core Values
 
-### Quality Control (QC)
-
-- **Convention:** ESLint와 Prettier를 통해 코드 스타일을 강제 통일합니다.
-- **Automation:** Husky와 Lint-staged를 도입하여, 규약에 맞지 않는 코드는 커밋 단계에서 시스템적으로 차단합니다.
+- **Verification (검증):** 직접 학습하고 소화한 내용만 Notion에 기록합니다.
+- **Synchronization (동기화):** 별도의 배포 과정 없이, Notion에 글을 쓰면 웹사이트에 즉시 반영됩니다.
+- **Aesthetics (미학):** 개발자스러운 터미널 감성과 현대적인 Glassmorphism(유리 질감) UI를 융합했습니다.
 
 ---
 
-## 3. Knowledge Management Strategy
+## 2. Key Features
 
-수많은 지식을 단순 나열하는 것이 아니라, 검색과 확장이 용이하도록 다음과 같이 관리합니다.
+### 🗂️ Dynamic File Tree System
 
-### Phase 1: Data Structuring (데이터 구조화)
+- **Notion as a DB:** 노션의 하위 페이지 구조를 재귀적으로 파싱하여, 웹사이트에서 **폴더 트리(File Tree)** 형태로 시각화합니다.
+- **Instant Search:** 복잡한 뎁스(Depth) 속에서도 원하는 문서를 즉시 찾아내는 클라이언트 사이드 검색 기능을 제공합니다.
 
-- **Raw Data:** 구민사 교재, 법령, 기출문제 등 비정형 텍스트.
-- **Processing:** 학습 단위별(Chapter)로 분해하고 메타데이터(중요도, 출제 빈도, 관련 키워드)를 부여하여 JSON 포맷으로 변환합니다.
-- **Storage:** `/data` 디렉토리 내에 도메인별(Safety, Dev, Docker)로 격리하여 저장합니다.
+### 💬 Interactive Request System
 
-### Phase 2: Docker Containerization (지식의 모듈화)
+- **Discord Webhook Integration:** 사용자가 필요한 지식을 요청하면, Discord Webhook을 통해 관리자의 채널로 알림이 전송됩니다.
+- **Interactive UI:** '알약(Pill)' 형태의 모던한 UI와 모달(Modal) 인터랙션을 통해 사용자 경험을 극대화했습니다.
 
-- **Domain Isolation:** 추후 '산업안전 컨테이너', '개발지식 컨테이너' 등 주제별로 독립된 Docker 컨테이너를 운용합니다.
-- **Portable Knowledge:** 개발 환경과 배포 환경의 일치성을 보장하며, 언제 어디서든 내 지식 서버를 띄울 수 있는 환경을 구축합니다.
+### 🎨 Aura Design Language
 
-### Phase 3: AI Integration (지능형 검색)
-
-- **RAG (Retrieval-Augmented Generation):** 검증된 내 데이터베이스만을 참조하는 AI 에이전트를 연동합니다.
-- **Objective:** 외부 LLM의 거짓 정보(Hallucination)를 배제하고, 내가 쌓은 신뢰할 수 있는 데이터 내에서 답을 도출합니다.
+- **Glassmorphism:** 배경이 은은하게 비치는 반투명 UI와 격자(Grid) 패턴 배경을 적용했습니다.
+- **Glow Effect:** 주요 컨텐츠(트리 박스 등) 주변에 은은한 오오라 효과를 주어 몰입감을 높였습니다.
 
 ---
 
-## 4. System Architecture
+## 3. Tech Stack & Architecture
 
 ### Frontend
 
-- **Framework:** Next.js (App Router) - SEO 최적화 및 서버 사이드 렌더링(SSR)
-- **Language:** TypeScript - 정적 타입 시스템을 통한 데이터 무결성 확보
-- **Styling:** Tailwind CSS - 일관된 디자인 시스템 적용
+- **Framework:** Next.js 14 (App Router) - SEO 최적화 및 ISR(Incremental Static Regeneration) 적용
+- **Language:** TypeScript - 엄격한 타입 지정을 통한 런타임 에러 방지
+- **Styling:** Tailwind CSS - 유틸리티 퍼스트 CSS를 통한 빠른 UI 구축
 
-### Infrastructure (Planned)
+### Backend & Infrastructure
 
-- **Container:** Docker
-- **CI/CD:** GitHub Actions (예정)
+- **CMS (Content Management System):** Notion API (Notion Database를 백엔드로 활용)
+- **Deployment:** Vercel (CI/CD 자동화 및 Edge Network 배포)
+- **Communication:** Discord Webhook API
 
 ---
 
-## 5. Development Setup
+## 4. Project Management (IDD)
 
-### Prerequisites
+본 프로젝트는 **Issue Driven Development (이슈 주도 개발)** 방법론을 따릅니다.
 
-- Node.js (LTS Version)
-- npm
-- Git
+1.  **Issue First:** 모든 기능 개발과 버그 수정은 GitHub Issue 생성으로 시작합니다.
+2.  **Explicit Commit:** 커밋 메시지에 이슈 번호를 명시하여 개발 히스토리를 추적합니다. (예: `feat: add discord webhook #10`)
+3.  **Convention:** ESLint와 Prettier를 통해 코드 품질을 시스템적으로 관리합니다.
 
-<!-- ### Installation & Run
+---
+
+## 5. Roadmap
+
+- [x] **Phase 1: Foundation** - Next.js 환경 구축 및 Notion API 연동 (완료)
+- [x] **Phase 2: Archive UI** - 파일 트리 구조화 및 검색 기능 구현 (완료)
+- [x] **Phase 3: Interaction** - Discord 요청 기능 및 Webhook 연동 (완료)
+- [ ] **Phase 4: AI Integration** - 내 Notion 데이터를 기반으로 답변하는 AI Chatbot (RAG) 도입 (예정)
+- [ ] **Phase 5: Domain Expansion** - 산업안전, 개발, 경영 등 멀티 도메인 지식 확장
+
+---
+
+## 6. Installation
+
 ```bash
-# Repository Clone
-git clone [https://github.com/](https://github.com/)[YOUR_ID]/my-archive.git
+# 1. Repository Clone
+git clone [https://github.com/](https://github.com/)[YOUR_GITHUB_ID]/dechive.git
 
-# Install Dependencies
+# 2. Install Dependencies
 npm install
 
-# Run Development Server
-npm run dev -->
+# 3. Environment Setup (.env.local)
+# NOTION_API_KEY=...
+# NOTION_DATABASE_ID=...
+# DISCORD_WEBHOOK_URL=...
+
+# 4. Run Development Server
+npm run dev
+```
