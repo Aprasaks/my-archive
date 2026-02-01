@@ -12,6 +12,7 @@
   "dependencies": {
     "@next/third-parties": "^16.1.6",
     "@notionhq/client": "^5.8.0",
+    "@supabase/supabase-js": "^2.93.3",
     "framer-motion": "^12.23.26",
     "gray-matter": "^4.0.3",
     "lucide-react": "^0.562.0",

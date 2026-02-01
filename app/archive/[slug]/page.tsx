@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Metadata } from 'next';
 // 👇 [추가] 목차 컴포넌트 불러오기 (Step 2에서 만든 파일)
 import TableOfContents, { TocItem } from '@/components/archive/TableOfContents';
+import Comments from '@/components/archive/Comments';
 
 // ---------------------------------------------------------
 // [0-1. SEO 메타데이터 생성기]
@@ -384,6 +385,7 @@ export default async function Page({ params }: Props) {
               ))
             )}
           </article>
+          <Comments slug={post.slug} />
         </main>
 
         {/* 2. 오른쪽 TOC 영역 (PC에서만 보임 / w-64 고정) */}
