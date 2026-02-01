@@ -6,7 +6,7 @@ import { Metadata } from 'next';
 // 👇 [추가] 목차 컴포넌트 불러오기 (Step 2에서 만든 파일)
 import TableOfContents, { TocItem } from '@/components/archive/TableOfContents';
 import Comments from '@/components/archive/Comments';
-
+import CommentCount from '@/components/archive/CommentCount';
 // ---------------------------------------------------------
 // [0-1. SEO 메타데이터 생성기]
 // ---------------------------------------------------------
@@ -355,6 +355,7 @@ export default async function Page({ params }: Props) {
               <span className="text-sm text-slate-400">
                 {post.date.slice(0, 10)}
               </span>
+              <CommentCount slug={post.slug} className="ml-1" />
             </div>
             <h1 className="mb-4 text-4xl leading-tight font-black text-slate-900 md:text-5xl">
               {post.title}

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Post } from '@/lib/notion';
+import CommentCount from '@/components/archive/CommentCount';
 
 // ---------------------------------------------------------
 // [아이콘 모음]
@@ -144,6 +145,7 @@ function TreeItem({
         <span className="truncate text-slate-600 transition-colors group-hover:font-medium group-hover:text-blue-600">
           {item.title}
         </span>
+        <CommentCount slug={item.slug} className="ml-2" />
       </div>
     </Link>
   );
