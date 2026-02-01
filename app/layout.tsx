@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import Header from '../components/layout/Header';
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 // 👇 SEO 최적화된 메타데이터 설정
 export const metadata: Metadata = {
@@ -59,6 +60,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const gaId = process.env.NEXT_PUBLIC_GA_ID || '';
   return (
     <html lang="ko">
       <body className="bg-slate-50 font-sans text-slate-900 antialiased">
@@ -68,6 +70,7 @@ export default function RootLayout({
         {/* 본문 (헤더 높이만큼 띄움) */}
         <main className="min-h-screen pt-16">{children}</main>
       </body>
+      {gaId && <GoogleAnalytics gaId={gaId} />}
     </html>
   );
 }
