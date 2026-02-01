@@ -2,29 +2,27 @@ import React from 'react';
 import { getPageBySlug, getPageContent } from '@/lib/notion';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { Metadata } from 'next'; // 👈 [추가 1] Metadata 타입 import
+import { Metadata } from 'next';
+// 👇 [추가] 목차 컴포넌트 불러오기 (Step 2에서 만든 파일)
+import TableOfContents, { TocItem } from '@/components/archive/TableOfContents';
 
 // ---------------------------------------------------------
-// [0-1. SEO 메타데이터 생성기] (새로 추가됨!)
+// [0-1. SEO 메타데이터 생성기]
 // ---------------------------------------------------------
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
-// Next.js가 페이지를 만들기 전에 이 함수를 먼저 실행해서 <head>를 채워줘.
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPageBySlug(slug);
 
   if (!post) {
-    return {
-      title: '페이지를 찾을 수 없음',
-    };
+    return { title: '페이지를 찾을 수 없음' };
   }
 
-  // 글 본문 첫 줄을 요약으로 쓰고 싶지만, 성능상 제목과 태그로만 구성해도 충분해!
   return {
-    title: post.title, // "글 제목 | Dechive"로 자동 변환됨
+    title: post.title,
     description: `Demian's Archive: ${post.title} - ${post.tags.join(', ')}`,
     openGraph: {
       title: post.title,
@@ -40,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 // ---------------------------------------------------------
-// [0. 타입 정의] (기존 유지)
+// [0. 타입 정의]
 // ---------------------------------------------------------
 interface Annotations {
   bold: boolean;
@@ -79,7 +77,7 @@ interface NotionBlock {
 }
 
 // ---------------------------------------------------------
-// [1. 스타일 변환기] TextRenderer (기존 유지)
+// [1. 스타일 변환기] TextRenderer
 // ---------------------------------------------------------
 function TextRenderer({ richText }: { richText: NotionRichText[] }) {
   if (!richText) return null;
@@ -89,7 +87,6 @@ function TextRenderer({ richText }: { richText: NotionRichText[] }) {
       {richText.map((text, index) => {
         const { annotations } = text;
         const content = text.plain_text;
-
         let className = '';
 
         if (annotations.bold) className += ' font-bold';
@@ -171,7 +168,7 @@ function TextRenderer({ richText }: { richText: NotionRichText[] }) {
 }
 
 // ---------------------------------------------------------
-// [2. 블록 렌더러] BlockRenderer (기존 유지)
+// [2. 블록 렌더러] BlockRenderer
 // ---------------------------------------------------------
 function BlockRenderer({ block }: { block: NotionBlock }) {
   const { type } = block;
@@ -201,9 +198,7 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
     );
   }
 
-  if (type === 'divider') {
-    return <hr className="my-8 border-slate-200" />;
-  }
+  if (type === 'divider') return <hr className="my-8 border-slate-200" />;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const value = (block as any)[type];
@@ -212,19 +207,28 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
   switch (type) {
     case 'heading_1':
       return (
-        <h1 className="mt-10 mb-4 text-3xl font-bold text-slate-900">
+        <h1
+          id={block.id}
+          className="mt-10 mb-4 scroll-mt-24 text-3xl font-bold text-slate-900"
+        >
           <TextRenderer richText={value.rich_text} />
         </h1>
       );
     case 'heading_2':
       return (
-        <h2 className="mt-8 mb-3 border-b pb-2 text-2xl font-semibold text-slate-800">
+        <h2
+          id={block.id}
+          className="mt-8 mb-3 scroll-mt-24 border-b pb-2 text-2xl font-semibold text-slate-800"
+        >
           <TextRenderer richText={value.rich_text} />
         </h2>
       );
     case 'heading_3':
       return (
-        <h3 className="mt-6 mb-2 text-xl font-medium text-slate-800">
+        <h3
+          id={block.id}
+          className="mt-6 mb-2 scroll-mt-24 text-xl font-medium text-slate-800"
+        >
           <TextRenderer richText={value.rich_text} />
         </h3>
       );
@@ -281,7 +285,38 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
 }
 
 // ---------------------------------------------------------
-// [3. 메인 페이지] Page Component (기존 유지)
+// [3. 목차 추출 함수] extractToc (새로 추가됨!)
+// ---------------------------------------------------------
+function extractToc(blocks: NotionBlock[]): TocItem[] {
+  const toc: TocItem[] = [];
+
+  blocks.forEach((block) => {
+    if (block.type === 'heading_1' && block.heading_1) {
+      toc.push({
+        id: block.id,
+        text: block.heading_1.rich_text[0]?.plain_text || '',
+        level: 1,
+      });
+    } else if (block.type === 'heading_2' && block.heading_2) {
+      toc.push({
+        id: block.id,
+        text: block.heading_2.rich_text[0]?.plain_text || '',
+        level: 2,
+      });
+    } else if (block.type === 'heading_3' && block.heading_3) {
+      toc.push({
+        id: block.id,
+        text: block.heading_3.rich_text[0]?.plain_text || '',
+        level: 3,
+      });
+    }
+  });
+
+  return toc;
+}
+
+// ---------------------------------------------------------
+// [4. 메인 페이지] Page Component (레이아웃 변경됨!)
 // ---------------------------------------------------------
 export default async function Page({ params }: Props) {
   const { slug } = await params;
@@ -289,60 +324,77 @@ export default async function Page({ params }: Props) {
 
   if (!post) notFound();
 
-  // 👉 getPageContent에서 unknown 타입으로 오므로 캐스팅 필요
+  // Notion 블록 가져오기
   const rawBlocks = await getPageContent(post.id);
   const blocks = rawBlocks as unknown as NotionBlock[];
 
+  // 👉 목차 데이터 추출!
+  const toc = extractToc(blocks);
+
   return (
     <div className="min-h-screen bg-white px-6 pt-24 pb-20">
-      <div className="mx-auto max-w-3xl">
-        {/* 네비게이션 */}
-        <Link
-          href="/archive"
-          className="mb-8 inline-flex items-center text-sm font-medium text-slate-500 transition-colors hover:text-blue-600"
-        >
-          <span className="mr-1">←</span> 목차로 돌아가기
-        </Link>
+      {/* 👇 레이아웃 변경: flex로 좌우 배치 (최대 너비 7xl) */}
+      <div className="mx-auto flex max-w-7xl gap-10">
+        {/* 1. 왼쪽 본문 영역 (flex-1로 남은 공간 다 차지) */}
+        <main className="min-w-0 flex-1">
+          {/* 네비게이션 */}
+          <Link
+            href="/archive"
+            className="mb-8 inline-flex items-center text-sm font-medium text-slate-500 transition-colors hover:text-blue-600"
+          >
+            <span className="mr-1">←</span> 목차로 돌아가기
+          </Link>
 
-        {/* 헤더 */}
-        <header className="mb-12 border-b border-slate-100 pb-8">
-          <div className="mb-4 flex items-center gap-2">
-            <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-bold tracking-wider text-blue-700 uppercase">
-              {post.type}
-            </span>
-            <span className="text-sm text-slate-400">
-              {post.date.slice(0, 10)}
-            </span>
+          {/* 헤더 */}
+          <header className="mb-12 border-b border-slate-100 pb-8">
+            <div className="mb-4 flex items-center gap-2">
+              <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-bold tracking-wider text-blue-700 uppercase">
+                {post.type}
+              </span>
+              <span className="text-sm text-slate-400">
+                {post.date.slice(0, 10)}
+              </span>
+            </div>
+            <h1 className="mb-4 text-4xl leading-tight font-black text-slate-900 md:text-5xl">
+              {post.title}
+            </h1>
+            {post.tags.length > 0 && (
+              <div className="mt-4 flex gap-2">
+                {post.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </header>
+
+          {/* 본문 콘텐츠 */}
+          <article className="prose prose-slate min-h-96 max-w-none">
+            {blocks.length === 0 ? (
+              <div className="rounded-xl bg-slate-50 p-8 text-center text-slate-500">
+                <p>📝 아직 작성된 내용이 없습니다.</p>
+              </div>
+            ) : (
+              blocks.map((block) => (
+                <BlockRenderer key={block.id} block={block} />
+              ))
+            )}
+          </article>
+        </main>
+
+        {/* 2. 오른쪽 TOC 영역 (PC에서만 보임 / w-64 고정) */}
+        <aside className="hidden w-64 shrink-0 lg:block">
+          <div className="sticky top-24">
+            <TableOfContents toc={toc} />
+
+            {/* 👇 나중에 여기가 광고 명당 자리! */}
+            {/* <div className="mt-8 h-64 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400 text-sm">광고 영역</div> */}
           </div>
-          <h1 className="mb-4 text-4xl leading-tight font-black text-slate-900 md:text-5xl">
-            {post.title}
-          </h1>
-          {post.tags.length > 0 && (
-            <div className="mt-4 flex gap-2">
-              {post.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
-        </header>
-
-        {/* 본문 */}
-        <article className="prose prose-slate min-h-96 max-w-none">
-          {blocks.length === 0 ? (
-            <div className="rounded-xl bg-slate-50 p-8 text-center text-slate-500">
-              <p>📝 아직 작성된 내용이 없습니다.</p>
-            </div>
-          ) : (
-            blocks.map((block) => (
-              <BlockRenderer key={block.id} block={block} />
-            ))
-          )}
-        </article>
+        </aside>
       </div>
     </div>
   );
