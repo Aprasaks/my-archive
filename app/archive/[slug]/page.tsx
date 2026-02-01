@@ -2,12 +2,46 @@ import React from 'react';
 import { getPageBySlug, getPageContent } from '@/lib/notion';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { Metadata } from 'next'; // 👈 [추가 1] Metadata 타입 import
 
 // ---------------------------------------------------------
-// [0. 타입 정의]
+// [0-1. SEO 메타데이터 생성기] (새로 추가됨!)
 // ---------------------------------------------------------
+type Props = {
+  params: Promise<{ slug: string }>;
+};
 
-// 1. 텍스트 스타일(Annotations) 타입
+// Next.js가 페이지를 만들기 전에 이 함수를 먼저 실행해서 <head>를 채워줘.
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await getPageBySlug(slug);
+
+  if (!post) {
+    return {
+      title: '페이지를 찾을 수 없음',
+    };
+  }
+
+  // 글 본문 첫 줄을 요약으로 쓰고 싶지만, 성능상 제목과 태그로만 구성해도 충분해!
+  return {
+    title: post.title, // "글 제목 | Dechive"로 자동 변환됨
+    description: `Demian's Archive: ${post.title} - ${post.tags.join(', ')}`,
+    openGraph: {
+      title: post.title,
+      description: `Demian의 지식 저장소에서 ${post.title}에 대해 알아보세요.`,
+      url: `https://demian.dev/archive/${post.slug}`,
+      type: 'article',
+      publishedTime: post.date,
+      authors: ['Demian'],
+      tags: post.tags,
+    },
+    keywords: [...post.tags, 'Demian', 'Tech Blog'],
+  };
+}
+
+// ---------------------------------------------------------
+// [0. 타입 정의] (기존 유지)
+// ---------------------------------------------------------
 interface Annotations {
   bold: boolean;
   italic: boolean;
@@ -17,14 +51,12 @@ interface Annotations {
   color: string;
 }
 
-// 2. 리치 텍스트(RichText) 타입
 interface NotionRichText {
   plain_text: string;
   annotations: Annotations;
   href?: string | null;
 }
 
-// 3. 블록(Block) 타입
 interface NotionBlock {
   id: string;
   type: string;
@@ -47,7 +79,7 @@ interface NotionBlock {
 }
 
 // ---------------------------------------------------------
-// [1. 스타일 변환기] TextRenderer
+// [1. 스타일 변환기] TextRenderer (기존 유지)
 // ---------------------------------------------------------
 function TextRenderer({ richText }: { richText: NotionRichText[] }) {
   if (!richText) return null;
@@ -60,7 +92,6 @@ function TextRenderer({ richText }: { richText: NotionRichText[] }) {
 
         let className = '';
 
-        // 기본 스타일
         if (annotations.bold) className += ' font-bold';
         if (annotations.italic) className += ' italic';
         if (annotations.strikethrough)
@@ -72,7 +103,6 @@ function TextRenderer({ richText }: { richText: NotionRichText[] }) {
             ' bg-slate-100 text-red-500 font-mono px-1.5 py-0.5 rounded text-sm mx-0.5 border border-slate-200';
         }
 
-        // 색상 처리
         switch (annotations.color) {
           case 'gray':
             className += ' text-gray-500';
@@ -141,12 +171,11 @@ function TextRenderer({ richText }: { richText: NotionRichText[] }) {
 }
 
 // ---------------------------------------------------------
-// [2. 블록 렌더러] BlockRenderer
+// [2. 블록 렌더러] BlockRenderer (기존 유지)
 // ---------------------------------------------------------
 function BlockRenderer({ block }: { block: NotionBlock }) {
   const { type } = block;
 
-  // 1. 이미지 처리
   if (type === 'image' && block.image) {
     const image = block.image;
     const src =
@@ -172,13 +201,10 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
     );
   }
 
-  // 2. 구분선 처리
   if (type === 'divider') {
     return <hr className="my-8 border-slate-200" />;
   }
 
-  // 3. 텍스트 블록 처리
-  // TypeScript에게 타입을 단언하여 접근
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const value = (block as any)[type];
   if (!value || !value.rich_text) return null;
@@ -209,8 +235,6 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
           <TextRenderer richText={value.rich_text} />
         </p>
       );
-
-    // 👉 [수정됨] pl-[40px] -> pl-10 (Tailwind 표준 클래스 사용)
     case 'bulleted_list_item':
       return (
         <li className="mb-1 list-disc pl-10 leading-relaxed text-slate-700">
@@ -223,7 +247,6 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
           <TextRenderer richText={value.rich_text} />
         </li>
       );
-
     case 'code':
       return (
         <div className="group relative my-6">
@@ -258,19 +281,15 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
 }
 
 // ---------------------------------------------------------
-// [3. 메인 페이지] Page Component
+// [3. 메인 페이지] Page Component (기존 유지)
 // ---------------------------------------------------------
-export default async function Page({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function Page({ params }: Props) {
   const { slug } = await params;
   const post = await getPageBySlug(slug);
 
   if (!post) notFound();
 
-  // 👉 [수정됨] 불필요한 eslint-disable 주석 제거됨
+  // 👉 getPageContent에서 unknown 타입으로 오므로 캐스팅 필요
   const rawBlocks = await getPageContent(post.id);
   const blocks = rawBlocks as unknown as NotionBlock[];
 
@@ -312,7 +331,7 @@ export default async function Page({
           )}
         </header>
 
-        {/* 👉 [수정됨] min-h-[400px] -> min-h-96 (384px, 표준 클래스)로 변경하여 경고 제거 */}
+        {/* 본문 */}
         <article className="prose prose-slate min-h-96 max-w-none">
           {blocks.length === 0 ? (
             <div className="rounded-xl bg-slate-50 p-8 text-center text-slate-500">

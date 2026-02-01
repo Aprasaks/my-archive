@@ -2,31 +2,31 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Header from '../components/layout/Header';
 
+// 👇 SEO 최적화된 메타데이터 설정
 export const metadata: Metadata = {
-  // 브라우저 탭에 표시될 이름 (템플릿 설정)
+  // 1. 기본 도메인 설정 (필수! 이걸 해야 이미지가 제대로 뜸)
+  metadataBase: new URL('https://demian.dev'),
+
+  // 2. 브라우저 탭 이름
   title: {
     template: '%s | Dechive',
     default: "Dechive - Demian's Archive",
   },
-  // 검색엔진이나 카톡 공유 시 나올 설명
-  description:
-    'Code, Life, and Knowledge. 기록하는 개발자 Demian의 모든 지식을 담은 저장소입니다.',
-  // 검색 키워드
+
+  // 3. 설명 (검색 결과용)
+  description: '모든 지식을 기록하고 공유하는 dechive 저장소입니다',
+
+  // 4. 키워드 (형이 작성한 전략 키워드 유지!)
   keywords: [
-    // 1. 브랜드 (나를 알리는 것)
     'Dechive',
     'Demian',
     '데카이브',
-
-    // 2. 직무 & 정체성 (신뢰도 상승)
     'Product Manager',
     'Web Developer',
     'PM',
     'AI 활용',
     'TIL',
     '회고',
-
-    // 3. 트래픽 & 수익화 (사람을 끌어오는 미끼)
     '산업안전기사',
     'CBT',
     '기출문제',
@@ -34,6 +34,24 @@ export const metadata: Metadata = {
     'IT 기술 블로그',
     '지식 아카이브',
   ],
+
+  // 5. SNS 공유 설정 (Open Graph) - 카톡, 슬랙용
+  openGraph: {
+    title: "Dechive - Demian's Archive",
+    description: '모든 지식을 기록하고 공유하는 dechive 저장소',
+    url: 'https://demian.dev',
+    siteName: 'Dechive',
+    locale: 'ko_KR',
+    type: 'website',
+  },
+
+  // 6. 구글/네이버 검색 등록용 (나중에 값만 넣으면 됨)
+  verification: {
+    google: '나중에_구글_서치콘솔_코드_넣기',
+    other: {
+      'naver-site-verification': '나중에_네이버_코드_넣기',
+    },
+  },
 };
 
 export default function RootLayout({
@@ -44,10 +62,10 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className="bg-slate-50 font-sans text-slate-900 antialiased">
-        {/* 1. 헤더 (항상 위에 고정) */}
+        {/* 헤더 (고정) */}
         <Header />
 
-        {/* 2. 본문 내용 (헤더 높이 16 = 64px 만큼 띄우고 시작) */}
+        {/* 본문 (헤더 높이만큼 띄움) */}
         <main className="min-h-screen pt-16">{children}</main>
       </body>
     </html>
