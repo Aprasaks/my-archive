@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Header from '../components/layout/Header';
 import { GoogleAnalytics } from '@next/third-parties/google';
+import GoogleAdsense from '../components/GoogleAdsense';
 
 // 👇 SEO 최적화된 메타데이터 설정
 export const metadata: Metadata = {
@@ -64,6 +65,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className="bg-slate-50 font-sans text-slate-900 antialiased">
+        <GoogleAdsense pId="4611005224374273" />
         {/* 헤더 (고정) */}
         <Header />
 

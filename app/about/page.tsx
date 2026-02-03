@@ -64,6 +64,21 @@ export default function AboutPage() {
           </Link>
         </div>
 
+        <div className="mt-12 text-center text-slate-500">
+          <p className="mb-2 text-sm">
+            Contact:{' '}
+            <a
+              href="mailto:demian@example.com"
+              className="font-semibold transition-colors hover:text-slate-800"
+            >
+              heavenin24@naver.com
+            </a>
+          </p>
+          <p className="text-sm opacity-80">
+            Next.js와 Notion을 활용한 지식 아카이브를 만들고 있습니다.
+          </p>
+        </div>
+
         {/* Footer */}
         <div className="mt-24 text-xs font-medium tracking-widest text-slate-300 uppercase">
           Designed & Developed by{' '}
