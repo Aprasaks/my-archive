@@ -1,24 +1,19 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import Header from '../components/layout/Header';
+// 👇 [중요] GoogleAdSense는 지우고, GoogleAnalytics만 남김 (에러 해결)
 import { GoogleAnalytics } from '@next/third-parties/google';
-import GoogleAdsense from '../components/GoogleAdsense';
+// 👇 [중요] Next.js 내장 Script 기능 가져오기
+import Script from 'next/script';
 
-// 👇 SEO 최적화된 메타데이터 설정
+// 👇 SEO 최적화된 메타데이터 (형이 설정한 그대로 유지)
 export const metadata: Metadata = {
-  // 1. 기본 도메인 설정 (필수! 이걸 해야 이미지가 제대로 뜸)
   metadataBase: new URL('https://demian.dev'),
-
-  // 2. 브라우저 탭 이름
   title: {
     template: '%s | Dechive',
     default: "Dechive - Demian's Archive",
   },
-
-  // 3. 설명 (검색 결과용)
   description: '모든 지식을 기록하고 공유하는 dechive 저장소입니다',
-
-  // 4. 키워드 (형이 작성한 전략 키워드 유지!)
   keywords: [
     'Dechive',
     'Demian',
@@ -36,8 +31,6 @@ export const metadata: Metadata = {
     'IT 기술 블로그',
     '지식 아카이브',
   ],
-
-  // 5. SNS 공유 설정 (Open Graph) - 카톡, 슬랙용
   openGraph: {
     title: "Dechive - Demian's Archive",
     description: '모든 지식을 기록하고 공유하는 dechive 저장소',
@@ -46,8 +39,6 @@ export const metadata: Metadata = {
     locale: 'ko_KR',
     type: 'website',
   },
-
-  // 6. 구글/네이버 검색 등록용 (나중에 값만 넣으면 됨)
   verification: {
     google: '나중에_구글_서치콘솔_코드_넣기',
     other: {
@@ -62,16 +53,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const gaId = process.env.NEXT_PUBLIC_GA_ID || '';
+
   return (
     <html lang="ko">
       <body className="bg-slate-50 font-sans text-slate-900 antialiased">
-        <GoogleAdsense pId="4611005224374273" />
-        {/* 헤더 (고정) */}
+        {/* 헤더 */}
         <Header />
 
         {/* 본문 (헤더 높이만큼 띄움) */}
         <main className="min-h-screen pt-16">{children}</main>
+
+        {/* 👇 [핵심] 라이브러리 대신 직접 넣은 애드센스 코드 (빨간 줄 절대 안 뜸) */}
+        <Script
+          id="adsense-script"
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4611005224374273"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
       </body>
+
+      {/* 구글 애널리틱스 (환경변수 있으면 작동) */}
       {gaId && <GoogleAnalytics gaId={gaId} />}
     </html>
   );
