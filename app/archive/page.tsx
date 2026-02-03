@@ -4,6 +4,7 @@ import RequestPill from '@/components/archive/RequestPill'; // 👈 방금 만�
 import { getAllItems } from '@/lib/notion';
 import { Suspense } from 'react'; // 👈 [1. 추가] 이거 불러와!
 
+export const revalidate = 60;
 export default async function ArchivePage() {
   const posts = await getAllItems();
 
