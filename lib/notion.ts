@@ -4,20 +4,16 @@ import {
   PartialPageObjectResponse,
 } from '@notionhq/client/build/src/api-endpoints';
 
-// 1. 노션 클라이언트 초기화
 const notion = new Client({
   auth: process.env.NOTION_API_KEY,
-  // 라이브러리 타입 정의에는 없지만, 실제로는 존재하는 옵션임
-  notionVersion: '2025-09-03',
 });
 
 const DATABASE_ID = process.env.NOTION_DATABASE_ID as string;
 
-// ---------------------------------------------------------
-// [Type Definition] 라이브러리가 지원하지 않는 v5 타입 직접 정의
-// ---------------------------------------------------------
+// =========================================================
+// [Type Definition] 1. 결과물 데이터 타입
+// =========================================================
 
-// 1. 우리가 사용할 포스트 데이터 타입
 export type Post = {
   id: string;
   title: string;
@@ -28,145 +24,274 @@ export type Post = {
   parentId: string | null;
 };
 
-// 2. 노션 데이터베이스 속성(Properties) 강제 정의 (any 방지용)
-interface DechiveDatabaseProperties {
-  Name: {
-    type: 'title';
-    title: Array<{ plain_text: string }>;
-  };
-  Slug: {
-    type: 'rich_text';
-    rich_text: Array<{ plain_text: string }>;
-  };
-  Type: {
-    type: 'select';
-    select: { name: string } | null;
-  };
-  Tag: {
-    type: 'multi_select';
-    multi_select: Array<{ name: string }>;
-  };
-  'Parent Item': {
-    type: 'relation';
-    relation: Array<{ id: string }>;
-  };
-  Status: {
-    type: 'status';
-    status: { name: string } | null;
-  };
+export type ProjectItem = {
+  id: string;
+  title: string;
+  description: string;
+  tags: string[];
+  github: string;
+  demo: string;
+  cover: string;
+};
+
+export type BdoRecipe = {
+  id: string;
+  name: string;
+  tag: string;
+  materials: { name: string; count: number }[];
+  tip: string;
+};
+
+// =========================================================
+// [Interface] 2. 노션 데이터 구조 "팩트" 정의 (Strict Typing)
+// =========================================================
+
+type NotionTitle = { type: 'title'; title: Array<{ plain_text: string }> };
+type NotionRichText = {
+  type: 'rich_text';
+  rich_text: Array<{ plain_text: string }>;
+};
+type NotionNumber = { type: 'number'; number: number | null };
+type NotionSelect = { type: 'select'; select: { name: string } | null };
+type NotionMultiSelect = {
+  type: 'multi_select';
+  multi_select: Array<{ name: string }>;
+};
+type NotionUrl = { type: 'url'; url: string | null };
+type NotionRelation = { type: 'relation'; relation: Array<{ id: string }> };
+type NotionStatus = { type: 'status'; status: { name: string } | null };
+
+// (1) [검은사막 DB] 구조
+interface BdoDatabaseProps {
+  Name: NotionTitle;
+  Tag: NotionSelect;
+  Tip: NotionRichText;
+  [key: string]:
+    | NotionTitle
+    | NotionSelect
+    | NotionRichText
+    | NotionNumber
+    | undefined;
 }
 
-// 3. v5 API (DataSources)를 위한 커스텀 클라이언트 인터페이스
-interface NotionClientV5 {
+// (2) [프로젝트 DB] 구조
+interface ProjectDatabaseProps {
+  Name: NotionTitle;
+  Description: NotionRichText;
+  Tags: NotionMultiSelect;
+  Github: NotionUrl;
+  Demo: NotionUrl;
+  [key: string]:
+    | NotionTitle
+    | NotionSelect
+    | NotionRichText
+    | NotionNumber
+    | NotionUrl
+    | NotionMultiSelect
+    | undefined;
+}
+
+// (3) [블로그 DB] 구조
+interface BlogDatabaseProps {
+  Name: NotionTitle;
+  Slug: NotionRichText;
+  Type: NotionSelect;
+  Tag: NotionMultiSelect;
+  'Parent Item': NotionRelation;
+  Status: NotionStatus;
+}
+
+// =========================================================
+// [Core Fix] V5 API 호환용 Client 및 Helper
+// =========================================================
+
+interface CustomQueryResponse {
+  results: (PageObjectResponse | PartialPageObjectResponse)[];
+  next_cursor: string | null;
+  has_more: boolean;
+}
+
+interface StrictNotionClient {
   databases: {
-    retrieve: (args: { database_id: string }) => Promise<{
-      id: string;
-      // v5에서 추가된 data_sources 속성 정의
-      data_sources?: Array<{ id: string }>;
-    }>;
+    // DB 정보 조회 (Data Source ID 얻기용)
+    retrieve: (args: {
+      database_id: string;
+    }) => Promise<{ id: string; data_sources?: { id: string }[] }>;
   };
   dataSources: {
+    // 실제 쿼리 (이게 형 환경의 유일한 조회 방법!)
     query: (args: {
       data_source_id: string;
       filter?: object;
       sorts?: object;
-    }) => Promise<{
-      results: (PageObjectResponse | PartialPageObjectResponse)[];
-    }>;
+    }) => Promise<CustomQueryResponse>;
+  };
+  blocks: {
+    children: {
+      list: (args: { block_id: string }) => Promise<{
+        results: (PageObjectResponse | PartialPageObjectResponse)[];
+      }>;
+    };
   };
 }
 
-// ---------------------------------------------------------
-// [Function] 데이터 가져오기 로직
-// ---------------------------------------------------------
+const strictNotion = notion as unknown as StrictNotionClient;
+
+// ⭐ [Helper] V5 방식 쿼리 함수 (Retrieve -> Get ID -> Query)
+async function queryV5Database(
+  databaseId: string,
+  sorts?: object[],
+  filter?: object
+) {
+  // 1. DB 정보 가져와서 Data Source ID 찾기
+  const db = await strictNotion.databases.retrieve({ database_id: databaseId });
+  const dataSourceId = db.data_sources?.[0]?.id;
+
+  if (!dataSourceId)
+    throw new Error(`No Data Source ID found for DB: ${databaseId}`);
+
+  // 2. Data Source ID로 쿼리 실행
+  return await strictNotion.dataSources.query({
+    data_source_id: dataSourceId,
+    sorts,
+    filter,
+  });
+}
+
+// =========================================================
+// [Function 1] 블로그 글 가져오기
+// =========================================================
 
 export async function getAllItems(): Promise<Post[]> {
-  // 1. 기존 Client를 우리가 만든 V5 인터페이스로 '안전하게' 변환 (Casting)
-  // unknown을 거쳐서 캐스팅하면 any 없이도 타입 변경 가능
-  const v5Notion = notion as unknown as NotionClientV5;
+  // 👇 헬퍼 함수로 교체!
+  const response = await queryV5Database(
+    DATABASE_ID,
+    [{ property: 'Date', direction: 'descending' }],
+    { property: 'Status', status: { equals: '완료' } }
+  );
 
-  // [단계 1] Data Source ID 찾기
-  const database = await v5Notion.databases.retrieve({
-    database_id: DATABASE_ID,
-  });
-
-  const dataSourceId = database.data_sources?.[0]?.id;
-
-  if (!dataSourceId) {
-    throw new Error(
-      'Data Source ID를 찾을 수 없습니다. 데이터베이스가 올바른지 확인해주세요.'
-    );
-  }
-
-  // [단계 2] 찾은 dataSourceId로 쿼리 날리기 (이제 자동완성 지원됨!)
-  const response = await v5Notion.dataSources.query({
-    data_source_id: dataSourceId,
-    filter: {
-      property: 'Status',
-      status: {
-        equals: '완료',
-      },
-    },
-    sorts: [
-      {
-        property: 'Date',
-        direction: 'descending',
-      },
-    ],
-  });
-
-  // [단계 3] 데이터 매핑 (Type Guard & Casting 활용)
-  const items = response.results.map((item) => {
-    // PartialPageObjectResponse 처리
-    if (!('properties' in item)) {
-      return {
-        id: item.id,
-        title: '접근 불가',
-        slug: '',
-        type: 'Post' as const, // 여기도 as const 붙여두면 좋아
-        tags: [],
-        date: '',
-        parentId: null,
-      };
-    }
-
-    const props = item.properties as unknown as DechiveDatabaseProperties;
+  return response.results.map((item) => {
+    if (!('properties' in item)) return createEmptyPost(item.id);
+    const props = item.properties as unknown as BlogDatabaseProps;
 
     return {
       id: item.id,
       title: props.Name?.title?.[0]?.plain_text || '제목 없음',
       slug: props.Slug?.rich_text?.[0]?.plain_text || '',
-
-      // 👇 [수정] 여기가 핵심이야! "이건 무조건 Post 아니면 Folder야"라고 강제 지정(as)
       type: (props.Type?.select?.name === 'Folder' ? 'Folder' : 'Post') as
         | 'Post'
         | 'Folder',
-
       tags: props.Tag?.multi_select?.map((tag) => tag.name) || [],
       date: item.created_time,
       parentId: props['Parent Item']?.relation?.[0]?.id || null,
     };
   });
-
-  return items;
 }
 
 export async function getPageBySlug(slug: string): Promise<Post | null> {
   const allPosts = await getAllItems();
-  const post = allPosts.find((p) => p.slug === slug);
-  return post || null;
+  return allPosts.find((p) => p.slug === slug) || null;
 }
 
-// ---------------------------------------------------------
-// [추가 기능] 페이지의 본문(블록) 내용 가져오기
-// ---------------------------------------------------------
 export async function getPageContent(pageId: string) {
-  // 노션 페이지는 '블록'들의 집합이야. (문단, 제목, 코드 등)
-  // v5 버전 호환을 위해 any로 우회해서 호출
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const response = await (notion as any).blocks.children.list({
+  const response = await strictNotion.blocks.children.list({
     block_id: pageId,
   });
-
   return response.results;
 }
+
+function createEmptyPost(id: string): Post {
+  return {
+    id,
+    title: '접근 불가',
+    slug: '',
+    type: 'Post',
+    tags: [],
+    date: '',
+    parentId: null,
+  };
+}
+
+// =========================================================
+// [Function 2] LAB 프로젝트 목록
+// =========================================================
+
+export const getProjectList = async (): Promise<ProjectItem[]> => {
+  if (!process.env.NOTION_PROJECT_ID) return [];
+
+  // 👇 헬퍼 함수로 교체! (databases.query -> dataSources.query)
+  const response = await queryV5Database(process.env.NOTION_PROJECT_ID, [
+    { property: 'Name', direction: 'ascending' },
+  ]);
+
+  const validPages = response.results.filter(
+    (item): item is PageObjectResponse => 'properties' in item
+  );
+
+  return validPages.map((item) => {
+    const props = item.properties as unknown as ProjectDatabaseProps;
+
+    let coverUrl = '/no-image.png';
+    if (item.cover) {
+      if (item.cover.type === 'external') coverUrl = item.cover.external.url;
+      else if (item.cover.type === 'file') coverUrl = item.cover.file.url;
+    }
+
+    return {
+      id: item.id,
+      title: props.Name?.title?.[0]?.plain_text || '제목 없음',
+      description: props.Description?.rich_text?.[0]?.plain_text || '',
+      tags: props.Tags?.multi_select?.map((tag) => tag.name) || [],
+      github: props.Github?.url || '',
+      demo: props.Demo?.url || '',
+      cover: coverUrl,
+    };
+  });
+};
+
+// =========================================================
+// [Function 3] 검은사막 레시피
+// =========================================================
+
+export const getBdoRecipes = async (): Promise<BdoRecipe[]> => {
+  if (!process.env.NOTION_RECIPE_ID) return [];
+
+  // 👇 헬퍼 함수로 교체! (여기도 문제였음!)
+  const response = await queryV5Database(process.env.NOTION_RECIPE_ID, [
+    { property: 'Name', direction: 'ascending' },
+  ]);
+
+  const validPages = response.results.filter(
+    (item): item is PageObjectResponse => 'properties' in item
+  );
+
+  return validPages.map((item) => {
+    const props = item.properties as unknown as BdoDatabaseProps;
+    const materials: { name: string; count: number }[] = [];
+
+    for (let i = 1; i <= 5; i++) {
+      const textKey = `Stuff${i}_T`;
+      const numKey = `Stuff${i}_N`;
+
+      const textProp = props[textKey];
+      const numProp = props[numKey];
+
+      if (textProp?.type === 'rich_text' && numProp?.type === 'number') {
+        const name = textProp.rich_text[0]?.plain_text;
+        const count = numProp.number;
+
+        if (name && count) {
+          materials.push({ name, count });
+        }
+      }
+    }
+
+    return {
+      id: item.id,
+      name: props.Name?.title?.[0]?.plain_text || '이름 없음',
+      tag: props.Tag?.select?.name || '기타',
+      materials: materials,
+      tip: props.Tip?.rich_text?.[0]?.plain_text || '',
+    };
+  });
+};
