@@ -13,6 +13,8 @@ export default function Header() {
   const navItems = [
     { name: 'Archive', href: '/archive', isExternal: false },
     { name: 'Study', href: '/exam', isExternal: false },
+    // 👇 형, 여기에 LAB 메뉴 추가했어!
+    { name: 'Lab', href: '/lab', isExternal: false },
     { name: 'Notion', href: 'https://www.notion.so', isExternal: true },
     { name: 'About', href: '/about', isExternal: false },
   ];
@@ -51,7 +53,7 @@ export default function Header() {
 
         {/* 3. 우측: 방문자 배지 & 모바일 버튼 */}
         <div className="flex items-center gap-4">
-          {/* [변경됨] 로그인 버튼 삭제 -> 방문자 배지 추가 */}
+          {/* 방문자 배지 */}
           <div className="hidden items-center gap-3 rounded-full border border-slate-100 bg-slate-50 px-3 py-1.5 shadow-sm sm:flex">
             <div className="flex flex-col items-end leading-none">
               <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
