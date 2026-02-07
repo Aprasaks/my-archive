@@ -96,15 +96,17 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
         : block.image.file?.url;
     if (!src) return null;
     return (
-      <figure className="my-10 overflow-hidden rounded-xl shadow-md">
-        <Image
-          src={src}
-          alt="Notion Image"
-          width={800}
-          height={450}
-          className="mx-auto h-auto w-full object-cover"
-          unoptimized // 외부 S3 URL 대응
-        />
+      <figure className="my-10 flex flex-col items-center justify-center">
+        <div className="relative w-full max-w-150 overflow-hidden rounded-xl border border-slate-100 shadow-md">
+          <Image
+            src={src}
+            alt="Notion Image"
+            width={600}
+            height={400}
+            className="h-auto w-full object-contain"
+            unoptimized
+          />
+        </div>
       </figure>
     );
   }
@@ -190,7 +192,6 @@ export default async function Page({ params }: Props) {
     <div className="min-h-screen bg-white px-6 pt-12 pb-20 font-sans">
       <div className="mx-auto flex max-w-7xl gap-10">
         <main className="min-w-0 flex-1">
-          {/* 상단 라인: 돌아가기(왼쪽) + 발행시간(오른쪽) */}
           <div className="mb-10 flex items-center justify-between">
             <Link
               href="/archive"
@@ -211,21 +212,18 @@ export default async function Page({ params }: Props) {
             </div>
           </div>
 
-          {/* 제목 영역: 위 라인과 mb-10(약 한 줄 이상) 간격을 둠 */}
           <header className="mb-10">
             <h1 className="text-4xl leading-[1.2] font-black tracking-tight text-slate-900 md:text-5xl">
               {post.title}
             </h1>
           </header>
 
-          {/* 본문 콘텐츠 */}
           <article className="prose prose-slate max-w-none border-b border-slate-100 pb-10">
             {blocks.map((block) => (
               <BlockRenderer key={block.id} block={block} />
             ))}
           </article>
 
-          {/* 하단 태그 영역 */}
           {post.tags.length > 0 && (
             <section className="mt-8 mb-4">
               <div className="flex flex-wrap gap-2">
