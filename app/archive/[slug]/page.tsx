@@ -69,7 +69,7 @@ function TextRenderer({ richText }: { richText: NotionRichText[] }) {
       {richText.map((text, index) => {
         const { annotations } = text;
         let className = '';
-        if (annotations.bold) className += ' font-bold';
+        if (annotations.bold) className += ' font-bold text-slate-900';
         if (annotations.italic) className += ' italic';
         if (annotations.strikethrough) className += ' line-through opacity-50';
         if (annotations.underline) className += ' underline underline-offset-4';
@@ -88,6 +88,8 @@ function TextRenderer({ richText }: { richText: NotionRichText[] }) {
 
 function BlockRenderer({ block }: { block: NotionBlock }) {
   const { type } = block;
+  // ID 정규화: 하이픈을 제거하여 TOC의 href와 일치시킵니다.
+  const normalizedId = block.id.replace(/-/g, '');
 
   if (type === 'image' && block.image) {
     const src =
@@ -122,8 +124,8 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
     case 'heading_1':
       return (
         <h1
-          id={block.id}
-          className="mt-10 mb-4 text-3xl font-black text-slate-900"
+          id={normalizedId}
+          className="mt-12 mb-6 scroll-mt-24 text-3xl font-black text-slate-900"
         >
           <TextRenderer richText={value.rich_text} />
         </h1>
@@ -131,15 +133,24 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
     case 'heading_2':
       return (
         <h2
-          id={block.id}
-          className="mt-8 mb-3 border-b pb-2 text-2xl font-bold text-slate-800"
+          id={normalizedId}
+          className="mt-10 mb-4 scroll-mt-24 border-b pb-2 text-2xl font-bold text-slate-800"
         >
           <TextRenderer richText={value.rich_text} />
         </h2>
       );
+    case 'heading_3':
+      return (
+        <h3
+          id={normalizedId}
+          className="mt-8 mb-3 scroll-mt-24 text-xl font-bold text-slate-800"
+        >
+          <TextRenderer richText={value.rich_text} />
+        </h3>
+      );
     case 'paragraph':
       return (
-        <p className="mb-3 text-lg leading-relaxed text-slate-700">
+        <p className="mb-4 text-lg leading-relaxed text-slate-700">
           <TextRenderer richText={value.rich_text} />
         </p>
       );
@@ -172,7 +183,8 @@ function extractToc(blocks: NotionBlock[]): TocItem[] {
     .map((b) => {
       const val = b[b.type as keyof NotionBlock] as BlockValue;
       return {
-        id: b.id,
+        // 본문의 ID 정규화 규칙과 동일하게 하이픈을 제거합니다.
+        id: b.id.replace(/-/g, ''),
         text: val?.rich_text[0]?.plain_text || '',
         level: parseInt(b.type.split('_')[1]),
       };
