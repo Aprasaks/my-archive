@@ -2,6 +2,7 @@ import React from 'react';
 import { getPageBySlug, getPageContent } from '@/lib/notion';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Metadata } from 'next';
 import TableOfContents, { TocItem } from '@/components/archive/TableOfContents';
 import Comments from '@/components/archive/Comments';
@@ -87,6 +88,7 @@ function TextRenderer({ richText }: { richText: NotionRichText[] }) {
 
 function BlockRenderer({ block }: { block: NotionBlock }) {
   const { type } = block;
+
   if (type === 'image' && block.image) {
     const src =
       block.image.type === 'external'
@@ -94,16 +96,21 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
         : block.image.file?.url;
     if (!src) return null;
     return (
-      <figure className="my-10">
-        <img
+      <figure className="my-10 overflow-hidden rounded-xl shadow-md">
+        <Image
           src={src}
           alt="Notion Image"
-          className="mx-auto max-w-[90%] rounded-xl shadow-md"
+          width={800}
+          height={450}
+          className="mx-auto h-auto w-full object-cover"
+          unoptimized // 외부 S3 URL 대응
         />
       </figure>
     );
   }
+
   if (type === 'divider') return <hr className="my-8 border-slate-100" />;
+
   const value = block[
     type as keyof Omit<NotionBlock, 'id' | 'type'>
   ] as BlockValue;
@@ -183,48 +190,58 @@ export default async function Page({ params }: Props) {
     <div className="min-h-screen bg-white px-6 pt-12 pb-20 font-sans">
       <div className="mx-auto flex max-w-7xl gap-10">
         <main className="min-w-0 flex-1">
-          <Link
-            href="/archive"
-            className="mb-6 inline-block text-sm font-medium text-slate-400 transition-colors hover:text-blue-600"
-          >
-            ← 목차로 돌아가기
-          </Link>
+          {/* 상단 라인: 돌아가기(왼쪽) + 발행시간(오른쪽) */}
+          <div className="mb-10 flex items-center justify-between">
+            <Link
+              href="/archive"
+              className="text-sm font-medium text-slate-400 transition-colors hover:text-blue-600"
+            >
+              ← 목차로 돌아가기
+            </Link>
 
-          <header className="mb-10 border-b border-slate-100 pb-8">
-            <div className="mb-4 flex items-center gap-3">
-              {/* Type 뱃지만 남기고 날짜와 Post 텍스트 제거 */}
-              {/* <span className="rounded bg-blue-600 px-2 py-0.5 text-[10px] font-black tracking-tighter text-white uppercase">
-                {post.type}
-              </span> */}
-              <CommentCount
-                slug={post.slug}
-                className="text-xs text-slate-400"
-              />
+            <div className="flex items-center gap-2 text-[11px] font-bold tracking-tight text-slate-400 uppercase">
+              <span>Published at</span>
+              <time>
+                {new Date(post.date).toLocaleTimeString('ko-KR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </time>
+              <CommentCount slug={post.slug} />
             </div>
+          </div>
 
-            <h1 className="mb-6 text-4xl font-black tracking-tight text-slate-900 md:text-5xl">
+          {/* 제목 영역: 위 라인과 mb-10(약 한 줄 이상) 간격을 둠 */}
+          <header className="mb-10">
+            <h1 className="text-4xl leading-[1.2] font-black tracking-tight text-slate-900 md:text-5xl">
               {post.title}
             </h1>
-
-            <div className="flex flex-wrap gap-2">
-              {post.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="cursor-default rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-500 transition-colors hover:bg-slate-200"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
           </header>
 
-          <article className="prose prose-slate max-w-none">
+          {/* 본문 콘텐츠 */}
+          <article className="prose prose-slate max-w-none border-b border-slate-100 pb-10">
             {blocks.map((block) => (
               <BlockRenderer key={block.id} block={block} />
             ))}
           </article>
 
-          <div className="mt-16">
+          {/* 하단 태그 영역 */}
+          {post.tags.length > 0 && (
+            <section className="mt-8 mb-4">
+              <div className="flex flex-wrap gap-2">
+                {post.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-md border border-slate-100 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-500"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <div className="mt-12">
             <Comments slug={post.slug} />
           </div>
         </main>
