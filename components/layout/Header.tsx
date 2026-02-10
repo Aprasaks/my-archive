@@ -2,27 +2,25 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import CubeLogo from '../ui/CubeLogo'; // 기존 큐브 로고 유지
-import { Menu, X, TrendingUp } from 'lucide-react'; // User 제거, TrendingUp 추가
+import CubeLogo from '../ui/CubeLogo';
+import { Menu, X } from 'lucide-react';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const closeMenu = () => setIsMenuOpen(false);
 
-  // 메뉴 아이템 정의
   const navItems = [
     { name: 'Archive', href: '/archive', isExternal: false },
     { name: 'Study', href: '/exam', isExternal: false },
-    // 👇 형, 여기에 LAB 메뉴 추가했어!
     { name: 'Lab', href: '/lab', isExternal: false },
     { name: 'Notion', href: 'https://www.notion.so', isExternal: true },
     { name: 'About', href: '/about', isExternal: false },
   ];
 
   return (
-    <header className="fixed top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md">
+    <header className="fixed top-0 z-100 w-full border-b border-white/5 bg-white/10 backdrop-blur-md">
       <div className="relative mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
-        {/* 1. 좌측: 로고 (쿠키 폰트 + 큐브 로고) */}
+        {/* 1. 좌측: 로고 */}
         <Link
           href="/"
           onClick={closeMenu}
@@ -40,62 +38,69 @@ export default function Header() {
             <Link
               key={item.name}
               href={item.href}
-              target={item.isExternal ? '_blank' : undefined}
-              rel={item.isExternal ? 'noopener noreferrer' : undefined}
-              className="group relative py-1 text-sm font-medium text-slate-600 transition-colors hover:text-slate-900"
+              className="group relative py-1 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900"
             >
               {item.name}
-              {/* 호버 시 나타나는 밑줄 애니메이션 */}
-              <span className="absolute bottom-0 left-0 h-0.5 w-0 bg-slate-600 transition-all duration-300 group-hover:w-full"></span>
+              <span className="absolute bottom-0 left-0 h-0.5 w-0 bg-slate-400 transition-all duration-300 group-hover:w-full"></span>
             </Link>
           ))}
         </nav>
 
-        {/* 3. 우측: 방문자 배지 & 모바일 버튼 */}
+        {/* 3. 우측: 방문자 카운트 & 모바일 버튼 */}
         <div className="flex items-center gap-4">
-          {/* 방문자 배지 */}
-          <div className="hidden items-center gap-3 rounded-full border border-slate-100 bg-slate-50 px-3 py-1.5 shadow-sm sm:flex">
-            <div className="flex flex-col items-end leading-none">
-              <span className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
-                Today
+          <div className="hidden items-center gap-4 text-[11px] font-bold tracking-[0.15em] text-slate-400 uppercase sm:flex">
+            <div className="flex flex-col items-end">
+              <span className="font-sans text-[9px] text-slate-300">
+                Visitors
               </span>
-              <span className="text-sm font-black text-slate-900">1,284</span>
+              <div className="flex items-center gap-2">
+                <span className="font-sans text-slate-800">1,284</span>
+                <div className="h-2 w-px bg-slate-200" />
+                <span className="font-sans text-blue-500/80">Live</span>
+              </div>
             </div>
-            <TrendingUp className="text-green-500" size={16} />
           </div>
 
-          {/* 모바일 메뉴 토글 버튼 */}
+          {/* 모바일 햄버거 버튼 - z-index 추가해서 클릭 우선순위 확보 */}
           <button
-            className="p-2 text-slate-600 md:hidden"
+            className="relative z-110 p-2 text-slate-600 md:hidden"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Toggle menu"
           >
-            {isMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
+            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </div>
 
-      {/* 4. 모바일 메뉴 드롭다운 */}
-      {isMenuOpen && (
-        <div className="animate-fade-in-down absolute top-16 left-0 w-full border-b border-slate-200 bg-white/95 backdrop-blur-md md:hidden">
-          <nav className="flex flex-col space-y-2 p-6 text-center">
-            {navItems.map((item) => (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={closeMenu}
-                target={item.isExternal ? '_blank' : undefined}
-                className="rounded-lg py-3 text-lg font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900"
-              >
-                {item.name}
-              </Link>
-            ))}
-          </nav>
-        </div>
-      )}
+      {/* 4. 모바일 메뉴 드롭다운 - 조건부 렌더링 대신 클래스로 제어하면 애니메이션 넣기 좋음 */}
+      <div
+        className={`fixed inset-x-0 top-0 z-105 w-full transform bg-white/80 backdrop-blur-xl transition-all duration-300 ease-in-out md:hidden ${
+          isMenuOpen
+            ? 'translate-y-0 opacity-100'
+            : '-translate-y-full opacity-0'
+        }`}
+      >
+        {/* - pt-24 pb-12: 위아래 여백 조절
+            - space-y-6: 메뉴 간격 살짝 좁힘 
+        */}
+        <nav className="flex flex-col items-center justify-center space-y-7 pt-24 pb-16">
+          {navItems.map((item) => (
+            <Link
+              key={item.name}
+              href={item.href}
+              onClick={closeMenu}
+              // text-sm font-medium tracking-[0.2em]: 데스크탑 느낌 이식
+              // uppercase: 영문 대문자로 더 깔끔하게
+              className="text-sm font-medium tracking-[0.2em] text-slate-500 uppercase transition-colors hover:text-slate-900"
+            >
+              {item.name}
+            </Link>
+          ))}
+
+          {/* 하단에 살짝 얇은 선 하나 넣어주면 더 예쁨 (선택사항) */}
+          <div className="mt-4 h-px w-8 bg-slate-200" />
+        </nav>
+      </div>
     </header>
   );
 }

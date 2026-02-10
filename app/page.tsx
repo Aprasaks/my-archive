@@ -1,39 +1,85 @@
 import React from 'react';
-import DateQuote from '@/components/home/DateQuote';
+import Link from 'next/link'; // 1. Link 컴포넌트 추가
 import SearchBar from '@/components/home/SearchBar';
-import RecentLogs from '@/components/home/RecentLogs';
-import { getAllItems } from '@/lib/notion'; // 👈 데이터 함수 가져오기
+import { getAllItems, Post } from '@/lib/notion';
 
-// Next.js 13+ 서버 컴포넌트는 async 가능!
 export default async function Home() {
-  // 1. 노션에서 데이터 싹 가져오기 (서버에서 실행되니 빠름)
-  const allPosts = await getAllItems();
+  const allPosts: Post[] = await getAllItems();
+
+  const IT_FOLDER_ID = '2fb1e4d7ba508084b29bcc7d523da266';
+  const HEALTH_FOLDER_ID = '3001e4d7ba5080328b6cc76ae2f1f55f';
+
+  const cleanId = (id: string | null) => (id ? id.replace(/-/g, '') : '');
+
+  const itLatestPost = allPosts.find(
+    (post) =>
+      cleanId(post.parentId) === cleanId(IT_FOLDER_ID) && post.type === 'Post'
+  );
+
+  const healthLatestPost = allPosts.find(
+    (post) =>
+      cleanId(post.parentId) === cleanId(HEALTH_FOLDER_ID) &&
+      post.type === 'Post'
+  );
 
   return (
-    <main className="relative flex min-h-[calc(100vh-64px)] flex-col items-center justify-center overflow-hidden bg-white px-6">
-      {/* 배경 패턴 */}
-      <div
-        className="pointer-events-none absolute inset-0 z-0 opacity-[0.4]"
-        style={{
-          backgroundImage: `linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(to right, #e5e7eb 1px, transparent 1px)`,
-          backgroundSize: '40px 40px',
-        }}
-      ></div>
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-6">
+      <div className="relative z-10 flex w-full max-w-5xl flex-col items-center gap-12 md:flex-row">
+        {/* 왼쪽: 브랜딩 & 검색창 */}
+        <div className="flex w-full flex-1 flex-col items-center md:items-start">
+          <div className="mb-8 flex flex-col items-center gap-3 md:items-start">
+            <h1 className="text-sm font-medium tracking-[0.5em] text-slate-400 uppercase">
+              Dechive Archive
+            </h1>
+            <div className="h-px w-12 bg-blue-500/50" />
+          </div>
 
-      {/* 메인 콘텐츠 */}
-      <div className="animate-fade-in-up relative z-10 flex w-full max-w-4xl flex-col items-center gap-12">
-        <DateQuote />
+          <div className="w-full max-w-2xl">
+            <SearchBar posts={allPosts} />
+          </div>
 
-        {/* 2. 데이터를 SearchBar에게 Props로 전달! 📦 */}
-        <SearchBar posts={allPosts} />
+          <div className="mt-8 flex gap-6 text-[10px] font-medium tracking-widest text-slate-400 uppercase">
+            <button className="underline decoration-slate-200 underline-offset-4 transition-colors hover:text-blue-500">
+              Kakao
+            </button>
+            <button className="underline decoration-slate-200 underline-offset-4 transition-colors hover:text-blue-500">
+              Instagram
+            </button>
+          </div>
+        </div>
 
-        <RecentLogs />
-      </div>
+        {/* 오른쪽: Today's Selection (링크 추가) */}
+        <div className="flex w-full flex-col gap-4 md:w-72">
+          <p className="mb-1 ml-1 text-[10px] font-bold tracking-[0.2em] text-slate-400 uppercase">
+            Today&apos;s Selection
+          </p>
 
-      {/* 푸터 */}
-      <div className="absolute bottom-6 text-xs font-medium tracking-widest text-slate-300 uppercase">
-        Designed & Developed by{' '}
-        <span className="font-bold text-slate-500">Demian</span>
+          {/* IT 카드: 클릭 시 /posts/[slug] 로 이동 (형의 경로에 맞춰 수정 가능) */}
+          <Link
+            href={itLatestPost ? `/archive/${itLatestPost.slug}` : '#'}
+            className={`group cursor-pointer rounded-xl border border-slate-200 bg-white/40 p-4 backdrop-blur-md transition-all hover:border-blue-400 ${!itLatestPost && 'pointer-events-none opacity-50'}`}
+          >
+            <span className="text-[9px] font-black tracking-tighter text-blue-500 uppercase">
+              # IT_TECH
+            </span>
+            <h3 className="mt-1 line-clamp-2 text-sm font-semibold text-slate-700 group-hover:text-blue-600">
+              {itLatestPost?.title || 'IT 소식을 준비 중입니다.'}
+            </h3>
+          </Link>
+
+          {/* 건강 카드: 클릭 시 이동 */}
+          <Link
+            href={healthLatestPost ? `/archive/${healthLatestPost.slug}` : '#'}
+            className={`group cursor-pointer rounded-xl border border-slate-200 bg-white/40 p-4 backdrop-blur-md transition-all hover:border-green-400 ${!healthLatestPost && 'pointer-events-none opacity-50'}`}
+          >
+            <span className="text-[9px] font-black tracking-tighter text-green-600 uppercase">
+              # HEALTH_CARE
+            </span>
+            <h3 className="mt-1 line-clamp-2 text-sm font-semibold text-slate-700 group-hover:text-green-700">
+              {healthLatestPost?.title || '건강 정보를 준비 중입니다.'}
+            </h3>
+          </Link>
+        </div>
       </div>
     </main>
   );
