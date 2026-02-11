@@ -1,13 +1,35 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import CubeLogo from '../ui/CubeLogo';
 import { Menu, X } from 'lucide-react';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [visitorCount, setVisitorCount] = useState('0'); // 실제 방문자 수 상태
+
   const closeMenu = () => setIsMenuOpen(false);
+
+  // 구글 애널리틱스 데이터 가져오기
+  useEffect(() => {
+    const fetchVisitors = async () => {
+      try {
+        const res = await fetch('/api/analytics');
+        const data = await res.json();
+        // 숫자가 0이면 좀 그러니까 최소 1명(형 본인)은 찍히게 하거나 그대로 노출
+        const count = data.activeUsers || '0';
+        setVisitorCount(Number(count).toLocaleString());
+      } catch (err) {
+        console.error('GA4 데이터 로드 실패:', err);
+      }
+    };
+
+    fetchVisitors();
+    // 1분(60,000ms)마다 숫자를 갱신 (너무 자주 하면 구글이 차단할 수 있음)
+    const interval = setInterval(fetchVisitors, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const navItems = [
     { name: 'Archive', href: '/archive', isExternal: false },
@@ -46,7 +68,7 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* 3. 우측: 방문자 카운트 & 모바일 버튼 */}
+        {/* 3. 우측: 방문자 카운트 (실제 데이터) & 모바일 버튼 */}
         <div className="flex items-center gap-4">
           <div className="hidden items-center gap-4 text-[11px] font-bold tracking-[0.15em] text-slate-400 uppercase sm:flex">
             <div className="flex flex-col items-end">
@@ -54,14 +76,21 @@ export default function Header() {
                 Visitors
               </span>
               <div className="flex items-center gap-2">
-                <span className="font-sans text-slate-800">1,284</span>
+                {/* 실시간 방문자 수 반영 */}
+                <span className="font-sans text-slate-800">{visitorCount}</span>
                 <div className="h-2 w-px bg-slate-200" />
-                <span className="font-sans text-blue-500/80">Live</span>
+                <div className="flex items-center gap-1.5">
+                  {/* 깜빡이는 라이브 포인트 효과 (선택사항) */}
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75"></span>
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+                  </span>
+                  <span className="font-sans text-blue-500/80">Live</span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* 모바일 햄버거 버튼 - z-index 추가해서 클릭 우선순위 확보 */}
           <button
             className="relative z-110 p-2 text-slate-600 md:hidden"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -72,32 +101,25 @@ export default function Header() {
         </div>
       </div>
 
-      {/* 4. 모바일 메뉴 드롭다운 - 조건부 렌더링 대신 클래스로 제어하면 애니메이션 넣기 좋음 */}
+      {/* 4. 모바일 메뉴 드롭다운 */}
       <div
-        className={`fixed inset-x-0 top-0 z-105 w-full transform bg-white/80 backdrop-blur-xl transition-all duration-300 ease-in-out md:hidden ${
+        className={`z-[105 fixed inset-x-0 top-0 w-full transform bg-white/80 backdrop-blur-xl transition-all duration-300 ease-in-out md:hidden ${
           isMenuOpen
             ? 'translate-y-0 opacity-100'
             : '-translate-y-full opacity-0'
         }`}
       >
-        {/* - pt-24 pb-12: 위아래 여백 조절
-            - space-y-6: 메뉴 간격 살짝 좁힘 
-        */}
         <nav className="flex flex-col items-center justify-center space-y-7 pt-24 pb-16">
           {navItems.map((item) => (
             <Link
               key={item.name}
               href={item.href}
               onClick={closeMenu}
-              // text-sm font-medium tracking-[0.2em]: 데스크탑 느낌 이식
-              // uppercase: 영문 대문자로 더 깔끔하게
               className="text-sm font-medium tracking-[0.2em] text-slate-500 uppercase transition-colors hover:text-slate-900"
             >
               {item.name}
             </Link>
           ))}
-
-          {/* 하단에 살짝 얇은 선 하나 넣어주면 더 예쁨 (선택사항) */}
           <div className="mt-4 h-px w-8 bg-slate-200" />
         </nav>
       </div>
