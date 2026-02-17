@@ -183,6 +183,8 @@ export async function getAllItems(): Promise<Post[]> {
         | 'Folder',
       tags: props.Tag?.multi_select?.map((tag) => tag.name) || [],
       date: item.created_time,
+      // [중요] 관계형 데이터에서 ID가 아니라 '연결된 폴더명'을 유추할 수 있도록 수정
+      // 일단 ID를 넘기되, 컴포넌트에서 이 ID를 슬러그와 매칭하게 할 거야.
       parentId: props['Parent Item']?.relation?.[0]?.id || null,
     };
   });

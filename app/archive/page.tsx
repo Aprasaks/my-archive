@@ -1,30 +1,35 @@
-import React from 'react';
-import FileTree from '@/components/archive/FileTree';
-import RequestPill from '@/components/archive/RequestPill'; // 👈 방금 만든 거 import
+import React, { Suspense } from 'react';
+import ArchiveBasic from '@/components/archive/ArchiveBasic';
+import RequestPill from '@/components/archive/RequestPill';
 import { getAllItems } from '@/lib/notion';
-import { Suspense } from 'react'; // 👈 [1. 추가] 이거 불러와!
 
-export const revalidate = 60;
+export const revalidate = 60; // 노션 글 쓰면 1분 뒤 반영
+
 export default async function ArchivePage() {
   const posts = await getAllItems();
 
   return (
-    <div className="flex min-h-[85vh] flex-col items-center justify-center p-4 md:p-8">
-      {/* 🌟 1. 오오라 카드 (트리) */}
-      <div className="mb-10 w-full max-w-2xl rounded-3xl border-2 border-blue-400/20 bg-white/80 p-6 shadow-[0_0_40px_-10px_rgba(96,165,255,0.3)] backdrop-blur-xl transition-all duration-500 hover:border-blue-400/40 hover:shadow-[0_0_60px_-5px_rgba(96,165,255,0.5)] md:p-8">
-        <Suspense
-          fallback={
-            <div className="p-4 text-sm text-slate-500">
-              목록을 불러오는 중...
-            </div>
-          }
-        >
-          <FileTree posts={posts} />
-        </Suspense>
+    <div className="min-h-screen bg-transparent pt-32 pb-40">
+      <div className="mx-auto mb-16 max-w-4xl px-6 text-center md:text-left">
+        <h1 className="text-3xl font-black tracking-tight text-slate-900">
+          Archive
+        </h1>
+        <p className="mt-2 text-sm font-medium text-slate-500">
+          기록된 모든 지식의 인덱스
+        </p>
       </div>
 
-      {/* 💊 2. 요청하기 알약 (여기에 기능이 다 들어있음!) */}
-      <div>
+      <Suspense
+        fallback={
+          <div className="py-20 text-center font-mono text-xs text-slate-400">
+            Loading Index...
+          </div>
+        }
+      >
+        <ArchiveBasic posts={posts} />
+      </Suspense>
+
+      <div className="fixed bottom-10 left-1/2 z-50 -translate-x-1/2">
         <RequestPill />
       </div>
     </div>
