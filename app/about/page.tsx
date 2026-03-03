@@ -2,88 +2,95 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { SiDiscord, SiKakaotalk, SiInstagram, SiGithub } from 'react-icons/si';
+import { SiGithub } from 'react-icons/si';
 
-export default function AboutPage() {
+export default function AboutPage(): React.ReactElement {
   return (
-    // [수정 1] main -> div (레이아웃에 이미 main이 있어서 중복 방지)
-    // [수정 2] min-h-screen -> min-h-[calc(100vh-64px)] (헤더 높이 64px 뺌)
-    <div className="relative flex min-h-[calc(100vh-64px)] flex-col items-center justify-center overflow-hidden bg-white px-6">
-      {/* 배경 패턴 */}
-      <div
-        className="pointer-events-none absolute inset-0 z-0 opacity-[0.4]"
-        style={{
-          backgroundImage: `linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(to right, #e5e7eb 1px, transparent 1px)`,
-          backgroundSize: '40px 40px',
-        }}
-      ></div>
-
-      {/* 메인 콘텐츠 */}
-      <div className="animate-fade-in-up relative z-10 w-full max-w-4xl text-center">
-        {/* 텍스트 영역 */}
-        <div className="mb-24 space-y-12">
-          <p className="text-sm font-bold tracking-[0.15em] text-slate-500 uppercase md:text-base">
-            PM의 시선 <span className="mx-2 text-slate-300">|</span> Developer의
-            기술 <span className="mx-2 text-slate-300">|</span> AI의 도움
+    <div className="relative flex min-h-[calc(100vh-16rem)] flex-col items-center px-6 pt-32 pb-40">
+      <div className="w-full max-w-4xl">
+        {/* Header: Pure Typography */}
+        <header className="mb-24 flex flex-col items-start gap-4 md:flex-row md:items-end md:justify-between">
+          <h1 className="text-4xl font-black tracking-tighter text-slate-900 md:text-6xl">
+            Dechive{' '}
+            <span className="text-xl font-light tracking-tight text-slate-300 italic md:text-2xl">
+              : Documenting the Undocumented
+            </span>
+          </h1>
+          <p className="pb-2 text-[10px] font-bold tracking-[0.4em] text-blue-500 uppercase">
+            Shared with You
           </p>
+        </header>
 
-          <div className="space-y-4">
-            <h1 className="animate-aurora-text bg-linear-to-r from-slate-400 via-slate-900 to-slate-400 bg-size-[200%_auto] bg-clip-text pb-1 text-3xl leading-tight font-bold text-transparent md:text-5xl">
-              세상 모든 지식을 공유하고 리뷰하는
-            </h1>
-            <h1 className="animate-aurora-text bg-linear-to-r from-slate-400 via-slate-900 to-slate-400 bg-size-[200%_auto] bg-clip-text pb-1 text-5xl font-black tracking-tight text-transparent md:text-7xl">
-              Dechive의 탄생!
-            </h1>
+        {/* Content Section: Editorial Style */}
+        <div className="grid grid-cols-1 gap-12 border-t border-slate-100 pt-12 md:grid-cols-2 md:gap-24">
+          {/* Left: Identity & Perspective */}
+          <div className="space-y-6">
+            <h3 className="text-[10px] font-black tracking-[0.3em] text-slate-300 uppercase italic">
+              / Perspectives
+            </h3>
+            <p className="text-lg leading-relaxed font-medium text-slate-600">
+              We do not simply replicate information. <br />
+              At the intersection of <br className="hidden md:block" />
+              <strong>Product Management</strong> and{' '}
+              <strong>Engineering</strong>, <br />
+              we restructure verified knowledge into a private archive.
+            </p>
+          </div>
+
+          {/* Right: The Goal of Archiving */}
+          <div className="space-y-6">
+            <h3 className="text-[10px] font-black tracking-[0.3em] text-slate-300 uppercase italic">
+              / Mission
+            </h3>
+            <div className="space-y-6">
+              <p className="text-sm leading-relaxed text-slate-500">
+                In an era of AI-generated noise, <br />
+                we believe in the power of{' '}
+                <strong>human-curated records</strong>. <br />
+                From deep-tech insights to daily wellness, <br />
+                we accumulate data that actually matters to your life.
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* 소셜 아이콘 */}
-        <div className="flex items-center justify-center gap-6 md:gap-10">
-          <Link href="#" className="group">
-            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-slate-400 shadow-sm transition-all duration-300 group-hover:-translate-y-2 group-hover:bg-[#5865F2] group-hover:text-white group-hover:shadow-lg">
-              <SiDiscord className="h-8 w-8" />
-            </div>
-          </Link>
+        {/* Categories: Minimalist List */}
+        <section className="mt-24 grid grid-cols-1 gap-8 border-t border-slate-50 pt-12 md:grid-cols-2">
+          <div className="group flex items-center gap-4">
+            <span className="text-xs font-black text-slate-200 italic transition-colors group-hover:text-blue-500">
+              01
+            </span>
+            <span className="text-[11px] font-bold tracking-widest text-slate-400 uppercase">
+              IT Tech & Infrastructure
+            </span>
+          </div>
+          <div className="group flex items-center gap-4">
+            <span className="text-xs font-black text-slate-200 italic transition-colors group-hover:text-green-500">
+              02
+            </span>
+            <span className="text-[11px] font-bold tracking-widest text-slate-400 uppercase">
+              Healthcare & Life-log
+            </span>
+          </div>
+        </section>
 
-          <Link href="#" className="group">
-            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-slate-400 shadow-sm transition-all duration-300 group-hover:-translate-y-2 group-hover:bg-[#FEE500] group-hover:text-[#371D1E] group-hover:shadow-lg">
-              <SiKakaotalk className="h-8 w-8" />
-            </div>
+        {/* Footer: Minimal & Clean */}
+        <footer className="mt-32 flex items-center justify-between opacity-30 transition-all hover:opacity-100">
+          <Link href="https://github.com/Aprasaks" target="_blank">
+            <SiGithub size={20} className="text-slate-900" />
           </Link>
-
-          <Link href="#" className="group">
-            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-slate-400 shadow-sm transition-all duration-300 group-hover:-translate-y-2 group-hover:bg-linear-to-tr group-hover:from-[#f09433] group-hover:via-[#dc2743] group-hover:to-[#bc1888] group-hover:text-white group-hover:shadow-lg">
-              <SiInstagram className="h-8 w-8" />
-            </div>
-          </Link>
-
-          <Link href="https://github.com" target="_blank" className="group">
-            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-slate-400 shadow-sm transition-all duration-300 group-hover:-translate-y-2 group-hover:bg-[#181717] group-hover:text-white group-hover:shadow-lg">
-              <SiGithub className="h-8 w-8" />
-            </div>
-          </Link>
-        </div>
-
-        <div className="mt-12 text-center text-slate-500">
-          <p className="mb-2 text-sm">
-            Contact:{' '}
+          <div className="flex flex-col items-end">
+            <span className="text-[9px] font-bold tracking-widest text-slate-300 uppercase">
+              Connect with Demian
+            </span>
             <a
-              href="mailto:demian@example.com"
-              className="font-semibold transition-colors hover:text-slate-800"
+              href="mailto:heavenin24@naver.com"
+              className="text-[10px] font-bold tracking-widest text-slate-900 uppercase underline decoration-slate-200 underline-offset-4"
             >
               heavenin24@naver.com
             </a>
-          </p>
-          <p className="text-sm opacity-80">
-            Next.js와 Notion을 활용한 지식 아카이브를 만들고 있습니다.
-          </p>
-        </div>
-
-        {/* Footer */}
-        <div className="mt-24 text-xs font-medium tracking-widest text-slate-300 uppercase">
-          Designed & Developed by{' '}
-          <span className="font-bold text-slate-500">Demian</span>
-        </div>
+          </div>
+        </footer>
       </div>
     </div>
   );
