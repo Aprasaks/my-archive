@@ -3,34 +3,37 @@ import ArchiveBasic from '@/components/archive/ArchiveBasic';
 import RequestPill from '@/components/archive/RequestPill';
 import { getAllItems } from '@/lib/notion';
 
-export const revalidate = 60; // 노션 글 쓰면 1분 뒤 반영
+export const revalidate = 60;
 
 export default async function ArchivePage() {
   const posts = await getAllItems();
 
   return (
-    <div className="min-h-screen bg-transparent pt-32 pb-40">
-      <div className="mx-auto mb-16 max-w-4xl px-6 text-center md:text-left">
-        <h1 className="text-3xl font-black tracking-tight text-slate-900">
-          Archive
-        </h1>
-        <p className="mt-2 text-sm font-medium text-slate-500">
-          기록된 모든 지식의 인덱스
-        </p>
-      </div>
-
-      <Suspense
-        fallback={
-          <div className="py-20 text-center font-mono text-xs text-slate-400">
-            Loading Index...
+    <div className="min-h-screen bg-transparent pt-16 pb-40">
+      <div className="mx-auto mb-16 max-w-5xl px-6">
+        {/* [수정] 타이틀과 요청 카드를 가로로 배치 (모바일은 세로) */}
+        <div className="flex flex-col justify-between gap-8 border-white/5 pb-12 md:flex-row md:items-end">
+          <div className="flex-1">
+            <h1 className="font-isyun text-6xl font-black tracking-tighter text-white">
+              Archive
+            </h1>
+            <p className="font-isyun mt-2 text-sm font-medium tracking-[0.4em] text-slate-500 uppercase">
+              Knowledge Index System
+            </p>
           </div>
-        }
-      >
-        <ArchiveBasic posts={posts} />
-      </Suspense>
 
-      <div className="fixed bottom-10 left-1/2 z-50 -translate-x-1/2">
-        <RequestPill />
+          <div className="w-full md:w-100">
+            <RequestPill />
+          </div>
+        </div>
+
+        <Suspense
+          fallback={
+            <div className="text-center text-white">Loading Index...</div>
+          }
+        >
+          <ArchiveBasic posts={posts} />
+        </Suspense>
       </div>
     </div>
   );

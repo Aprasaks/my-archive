@@ -2,16 +2,20 @@
 @plugin '@tailwindcss/typography';
 
 @theme {
-  /* 1. 폰트 테마 (시스템 폰트로 가독성 확보, 쿠키런은 포인트로만) */
   --font-sans: 'Pretendard', 'Geist', 'Inter', sans-serif;
-  --font-cookie: 'CookieRun', sans-serif;
+  /* 쿠키런 대신 이서윤체 변수 추가 */
+  --font-isyun: 'IsYun', sans-serif;
 
-  /* 2. 하이테크 컬러 시스템 */
-  --color-bg-main: #f8fafc;
-  --color-dot: #e2e8f0;
+  /* 1. 배경: 완전 검정 대신 깊이감 있는 흑색 */
+  --color-bg-main: #0a0a0b;
+  /* 2. 도트: 아주 미세하게 보이는 화이트 (투명도 3%) */
+  --color-dot: rgba(255, 255, 255, 0.03);
   --color-brand: #3b82f6;
 
-  /* 3. 오로라 텍스트 애니메이션 (로고나 버튼용) */
+  /* 3. 유리질감용 컬러 변수 */
+  --color-glass-bg: rgba(255, 255, 255, 0.03);
+  --color-glass-border: rgba(255, 255, 255, 0.08);
+
   --animate-aurora: aurora 6s linear infinite;
   @keyframes aurora {
     from {
@@ -26,27 +30,43 @@
 /* -------------------------------------------------- */
 
 @layer base {
+  /* [추가] 이서윤체 폰트 페이스 로드 */
+  @font-face {
+    font-family: 'IsYun';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2202-2@1.0/LeeSeoyun.woff')
+      format('woff');
+    font-weight: normal;
+    font-display: swap;
+  }
+
   *,
   ::after,
   ::before {
-    @apply border-slate-200; /* 전역 보더 색상 통일 */
+    border-color: var(--color-glass-border);
   }
 
   body {
     background-color: var(--color-bg-main);
-    color: #0f172a;
+    color: #f1f5f9;
     @apply antialiased;
   }
 }
 
-/* 4. 도트 그리드 유틸리티 (마우스 반응형 레이어용) */
+/* 4. 도트 그리드 유틸리티 */
 @utility dot-grid {
   background-image: radial-gradient(var(--color-dot) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
-/* 5. 가독성을 위한 선택 영역 커스텀 (신박함 한 스푼) */
+/* 5. 유리질감 카드 유틸리티 */
+@utility glass-card {
+  background-color: var(--color-glass-bg);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-glass-border);
+}
+
+/* 6. 선택 영역 커스텀 */
 ::selection {
-  background-color: rgba(59, 130, 246, 0.15);
-  color: var(--color-brand);
+  background-color: rgba(59, 130, 246, 0.3);
+  color: #ffffff;
 }
