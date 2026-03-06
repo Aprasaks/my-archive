@@ -69,13 +69,30 @@ function TextRenderer({ richText }: { richText: NotionRichText[] }) {
       {richText.map((text, index) => {
         const { annotations } = text;
         let className = '';
-        if (annotations.bold) className += ' font-bold text-slate-900';
-        if (annotations.italic) className += ' italic';
-        if (annotations.strikethrough) className += ' line-through opacity-50';
-        if (annotations.underline) className += ' underline underline-offset-4';
+        // [수정] 볼드체 명도 강화
+        if (annotations.bold)
+          className +=
+            ' font-bold text-white shadow-[0_0_15px_rgba(255,255,255,0.15)]';
+        if (annotations.italic) className += ' italic text-slate-50';
+        if (annotations.strikethrough) className += ' line-through opacity-40';
+        if (annotations.underline)
+          className += ' underline underline-offset-4 decoration-blue-500/60';
         if (annotations.code)
           className +=
-            ' bg-slate-100 text-blue-600 font-mono px-1 rounded text-[0.9em] border border-slate-200';
+            ' bg-white/15 text-blue-300 font-mono px-1.5 py-0.5 rounded text-[0.85em] border border-white/10';
+
+        if (text.href) {
+          return (
+            <Link
+              key={index}
+              href={text.href}
+              className={`${className} text-blue-400 underline decoration-blue-400/30 transition-colors hover:text-blue-300 hover:decoration-blue-300`}
+            >
+              {text.plain_text}
+            </Link>
+          );
+        }
+
         return (
           <span key={index} className={className}>
             {text.plain_text}
@@ -88,7 +105,6 @@ function TextRenderer({ richText }: { richText: NotionRichText[] }) {
 
 function BlockRenderer({ block }: { block: NotionBlock }) {
   const { type } = block;
-  // ID 정규화: 하이픈을 제거하여 TOC의 href와 일치시킵니다.
   const normalizedId = block.id.replace(/-/g, '');
 
   if (type === 'image' && block.image) {
@@ -98,13 +114,13 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
         : block.image.file?.url;
     if (!src) return null;
     return (
-      <figure className="my-10 flex flex-col items-center justify-center">
-        <div className="relative w-full max-w-150 overflow-hidden rounded-xl border border-slate-100 shadow-md">
+      <figure className="my-14 flex flex-col items-center justify-center">
+        <div className="relative w-full overflow-hidden rounded-2xl border border-white/5 shadow-2xl">
           <Image
             src={src}
-            alt="Notion Image"
-            width={600}
-            height={400}
+            alt="Post content"
+            width={1000}
+            height={600}
             className="h-auto w-full object-contain"
             unoptimized
           />
@@ -113,7 +129,7 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
     );
   }
 
-  if (type === 'divider') return <hr className="my-8 border-slate-100" />;
+  if (type === 'divider') return <hr className="my-12 border-white/10" />;
 
   const value = block[
     type as keyof Omit<NotionBlock, 'id' | 'type'>
@@ -125,7 +141,7 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
       return (
         <h1
           id={normalizedId}
-          className="mt-12 mb-6 scroll-mt-24 text-3xl font-black text-slate-900"
+          className="font-isyun mt-20 mb-10 scroll-mt-32 text-4xl leading-tight font-black text-white"
         >
           <TextRenderer richText={value.rich_text} />
         </h1>
@@ -134,7 +150,7 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
       return (
         <h2
           id={normalizedId}
-          className="mt-10 mb-4 scroll-mt-24 border-b pb-2 text-2xl font-bold text-slate-800"
+          className="font-isyun mt-16 mb-8 scroll-mt-32 border-b border-white/15 pb-4 text-2xl font-bold text-slate-50"
         >
           <TextRenderer richText={value.rich_text} />
         </h2>
@@ -143,47 +159,54 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
       return (
         <h3
           id={normalizedId}
-          className="mt-8 mb-3 scroll-mt-24 text-xl font-bold text-slate-800"
+          className="font-isyun mt-12 mb-6 scroll-mt-32 text-xl font-bold text-slate-100"
         >
           <TextRenderer richText={value.rich_text} />
         </h3>
       );
     case 'paragraph':
       return (
-        <p className="mb-4 text-lg leading-relaxed text-slate-700">
+        // [수정] 텍스트 색상을 slate-50으로 변경하여 가독성 극대화
+        <p className="mb-8 text-[18px] leading-[1.85] font-normal tracking-tight text-slate-50">
           <TextRenderer richText={value.rich_text} />
         </p>
       );
     case 'bulleted_list_item':
-      return (
-        <li className="mb-2 ml-6 list-disc pl-1 text-slate-700">
-          <TextRenderer richText={value.rich_text} />
-        </li>
-      );
     case 'numbered_list_item':
       return (
-        <li className="mb-2 ml-6 list-decimal pl-1 text-slate-700">
+        // [수정] 리스트 아이템 색상도 slate-50으로 통일
+        <li
+          className={`mb-4 ml-6 ${type === 'bulleted_list_item' ? 'list-disc' : 'list-decimal'} pl-3 text-[17px] leading-relaxed text-slate-50`}
+        >
           <TextRenderer richText={value.rich_text} />
         </li>
       );
     case 'code':
       return (
-        <pre className="my-6 overflow-x-auto rounded-lg bg-slate-900 p-4 font-mono text-sm text-slate-50">
-          <code>{value.rich_text[0]?.plain_text}</code>
+        <pre className="my-10 overflow-x-auto rounded-2xl border border-white/10 bg-black/60 p-8 font-mono text-sm text-blue-200 shadow-inner">
+          <code className="leading-relaxed">
+            {value.rich_text[0]?.plain_text}
+          </code>
         </pre>
+      );
+    case 'quote':
+      return (
+        <blockquote className="my-10 rounded-r-2xl border-l-4 border-blue-500/50 bg-blue-500/10 px-8 py-6 text-slate-50 italic">
+          <TextRenderer richText={value.rich_text} />
+        </blockquote>
       );
     default:
       return null;
   }
 }
 
+// ... extractToc 함수 생략 (기존과 동일)
 function extractToc(blocks: NotionBlock[]): TocItem[] {
   return blocks
     .filter((b) => b.type.startsWith('heading_'))
     .map((b) => {
       const val = b[b.type as keyof NotionBlock] as BlockValue;
       return {
-        // 본문의 ID 정규화 규칙과 동일하게 하이픈을 제거합니다.
         id: b.id.replace(/-/g, ''),
         text: val?.rich_text[0]?.plain_text || '',
         level: parseInt(b.type.split('_')[1]),
@@ -201,63 +224,59 @@ export default async function Page({ params }: Props) {
   const toc = extractToc(blocks);
 
   return (
-    <div className="min-h-screen bg-white px-6 pt-12 pb-20 font-sans">
-      <div className="mx-auto flex max-w-7xl gap-10">
+    <div className="min-h-screen bg-transparent px-6 pt-32 pb-40 font-sans selection:bg-blue-500/40">
+      <div className="mx-auto flex max-w-6xl gap-16">
         <main className="min-w-0 flex-1">
-          <div className="mb-10 flex items-center justify-between">
+          {/* 상단 네비게이션 */}
+          <div className="mb-14 flex items-center justify-between border-b border-white/10 pb-8">
             <Link
               href="/archive"
-              className="text-sm font-medium text-slate-400 transition-colors hover:text-blue-600"
+              className="font-isyun text-xs font-black tracking-widest text-slate-300 transition-all hover:text-blue-400"
             >
-              ← 목차로 돌아가기
+              ← BACK TO INDEX
             </Link>
 
-            <div className="flex items-center gap-2 text-[11px] font-bold tracking-tight text-slate-400 uppercase">
-              <span>Published at</span>
-              <time>
-                {new Date(post.date).toLocaleTimeString('ko-KR', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </time>
+            <div className="flex items-center gap-5 text-[10px] font-black tracking-widest text-slate-400 uppercase">
+              <time>{new Date(post.date).toLocaleDateString('ko-KR')}</time>
+              <div className="h-1 w-1 rounded-full bg-slate-600" />
               <CommentCount slug={post.slug} />
             </div>
           </div>
 
-          <header className="mb-10">
-            <h1 className="text-4xl leading-[1.2] font-black tracking-tight text-slate-900 md:text-5xl">
+          <header className="mb-20">
+            <h1 className="font-isyun text-5xl leading-[1.2] font-black tracking-tighter text-white drop-shadow-lg md:text-6xl">
               {post.title}
             </h1>
           </header>
 
-          <article className="prose prose-slate max-w-none border-b border-slate-100 pb-10">
+          <article className="prose prose-invert max-w-none">
             {blocks.map((block) => (
               <BlockRenderer key={block.id} block={block} />
             ))}
           </article>
 
           {post.tags.length > 0 && (
-            <section className="mt-8 mb-4">
-              <div className="flex flex-wrap gap-2">
+            <section className="mt-24 border-t border-white/10 pt-10">
+              <div className="flex flex-wrap gap-2.5">
                 {post.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-md border border-slate-100 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-500"
+                    className="rounded-full border border-white/20 bg-white/5 px-4 py-1.5 text-[10px] font-black tracking-wider text-slate-400 transition-colors hover:border-blue-500/50 hover:text-blue-300"
                   >
-                    #{tag}
+                    #{tag.toUpperCase()}
                   </span>
                 ))}
               </div>
             </section>
           )}
 
-          <div className="mt-12">
+          <div className="mt-24">
             <Comments slug={post.slug} />
           </div>
         </main>
 
         <aside className="hidden w-64 shrink-0 lg:block">
-          <div className="sticky top-12">
+          <div className="sticky top-32">
             <TableOfContents toc={toc} />
           </div>
         </aside>

@@ -28,19 +28,17 @@ export default function Header() {
     return () => clearInterval(interval);
   }, []);
 
+  // [수정] 형 요청대로 Study, Notion 지우고 3개만 남겼어!
   const navItems = [
     { name: 'Archive', href: '/archive', isExternal: false },
-    { name: 'Study', href: '/exam', isExternal: false },
     { name: 'Lab', href: '/lab', isExternal: false },
-    { name: 'Notion', href: 'https://www.notion.so', isExternal: true },
     { name: 'About', href: '/about', isExternal: false },
   ];
 
   return (
-    // [핵심] 배경(bg)과 테두리(border)를 완전히 제거하고, 상단에 은은한 그라데이션만 줌
     <header className="fixed top-0 z-100 w-full bg-linear-to-b from-black/40 to-transparent transition-all duration-300">
       <div className="relative mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
-        {/* [1] 좌측 로고: 텍스트에 그림자를 주어 가독성 확보 */}
+        {/* 좌측 로고 */}
         <Link
           href="/"
           onClick={closeMenu}
@@ -52,7 +50,7 @@ export default function Header() {
           </span>
         </Link>
 
-        {/* [2] 중앙 네비게이션: 공중에 떠 있는(Floating) 느낌 강조 */}
+        {/* 중앙 네비게이션 (3개 아이템) */}
         <nav className="hidden md:absolute md:left-1/2 md:flex md:-translate-x-1/2 md:items-center md:gap-12">
           {navItems.map((item) => (
             <Link
@@ -61,13 +59,12 @@ export default function Header() {
               className="group relative py-1 text-sm font-medium text-slate-300 drop-shadow-md transition-all hover:scale-105 hover:text-white"
             >
               {item.name}
-              {/* 하단 바는 유지하되 더 얇고 선명하게 */}
               <span className="absolute bottom-0 left-0 h-px w-0 bg-blue-500 shadow-[0_0_8px_#3b82f6] transition-all duration-300 group-hover:w-full"></span>
             </Link>
           ))}
         </nav>
 
-        {/* [3] 우측 정보 섹션: 배경 없이 텍스트 톤만 조절 */}
+        {/* 우측 Visitors 정보 */}
         <div className="flex items-center gap-4">
           <div className="hidden items-center gap-4 text-[11px] font-bold tracking-[0.15em] text-slate-400 uppercase sm:flex">
             <div className="flex flex-col items-end">
@@ -99,7 +96,7 @@ export default function Header() {
         </div>
       </div>
 
-      {/* 모바일 메뉴: 전체 화면을 덮는 묵직한 다크 배경 */}
+      {/* 모바일 메뉴 */}
       <div
         className={`bg-bg-main/95 fixed inset-x-0 top-0 h-screen w-full transform backdrop-blur-2xl transition-all duration-500 ease-in-out md:hidden ${
           isMenuOpen
