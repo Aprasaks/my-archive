@@ -16,30 +16,32 @@ export default async function LabPage() {
   const projects = await getProjectList();
 
   return (
-    // 1. 배경: demian.dev 스타일의 정교한 모눈종이 그리드
-    <div className="min-h-screen w-full bg-white text-slate-900">
-      {/* 그리드 패턴 (배경) */}
-      <div className="bg-size:24px_24px] absolute inset-0 h-full w-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)]"></div>
-
-      <div className="relative mx-auto max-w-4xl px-4 py-24">
-        {/* 2. 헤더: 이모티콘 싹 빼고 담백하게 */}
-        <div className="mb-16 border-b border-slate-200 pb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            PROJECTS
-          </h1>
-          <p className="mt-2 text-slate-500">Side projects and Lab</p>
+    // 1. 배경 및 전체 레이아웃: Archive와 동일하게 bg-transparent 및 패딩 설정
+    <div className="min-h-screen bg-transparent pt-16 pb-40">
+      <div className="mx-auto max-w-5xl px-6">
+        {/* 2. 헤더 영역: Archive의 6xl 폰트와 tracking-tighter 스타일 적용 */}
+        <div className="flex flex-col justify-between gap-8 border-b border-white/5 pb-12 md:flex-row md:items-end">
+          <div className="flex-1">
+            <h1 className="font-isyun text-6xl font-black tracking-tighter text-white">
+              Lab
+            </h1>
+            <p className="font-isyun mt-2 text-sm font-medium tracking-[0.4em] text-slate-500 uppercase">
+              Project & Experiment System
+            </p>
+          </div>
+          {/* 필요시 Archive처럼 오른쪽에 Pill 컴포넌트 추가 가능 */}
         </div>
 
-        {/* 3. 프로젝트 리스트 (가로형 배치) */}
-        <div className="space-y-6">
+        {/* 3. 프로젝트 리스트 영역: Glassmorphism 적용 */}
+        <div className="mt-16 space-y-6">
           {projects.length > 0 ? (
             projects.map((project) => (
               <div
                 key={project.id}
-                className="group relative flex flex-col gap-6 rounded-xl border border-slate-200 bg-white p-6 transition-all hover:border-slate-300 hover:shadow-lg md:flex-row md:items-start"
+                className="group relative flex flex-col gap-8 rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-md transition-all hover:border-blue-500/50 hover:bg-white/10 md:flex-row md:items-start"
               >
-                {/* (1) 썸네일 (작고 예쁘게) */}
-                <div className="relative h-32 w-full shrink-0 overflow-hidden rounded-lg border border-slate-100 bg-slate-50 md:w-48">
+                {/* 썸네일 (메인 페이지 Selection 느낌으로) */}
+                <div className="relative h-40 w-full shrink-0 overflow-hidden rounded-xl border border-white/5 bg-white/5 md:w-64">
                   {project.cover !== '/no-image.png' ? (
                     <Image
                       src={project.cover}
@@ -48,29 +50,26 @@ export default async function LabPage() {
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   ) : (
-                    // 이미지가 없을 때: 예쁜 그라디언트 박스
-                    <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-slate-100 to-slate-200 text-slate-400">
-                      <span className="text-xs font-bold tracking-widest uppercase opacity-50">
+                    <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-white/5 to-white/10 text-slate-600">
+                      <span className="text-[10px] font-black tracking-widest uppercase">
                         No Image
                       </span>
                     </div>
                   )}
                 </div>
 
-                {/* (2) 내용 (설명 + 기간) */}
+                {/* 내용 섹션 */}
                 <div className="flex flex-1 flex-col">
-                  <div className="mb-1 flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-slate-900">
+                  <div className="mb-2 flex items-center justify-between">
+                    <h2 className="text-2xl font-bold text-white transition-colors group-hover:text-blue-400">
                       {project.title}
                     </h2>
-
-                    {/* 링크 아이콘들 */}
-                    <div className="flex gap-2">
+                    <div className="flex gap-4 text-xl">
                       {project.github && (
                         <Link
                           href={project.github}
                           target="_blank"
-                          className="text-slate-400 transition-colors hover:text-slate-900"
+                          className="text-slate-500 transition-colors hover:text-white"
                         >
                           <SiGithub />
                         </Link>
@@ -78,7 +77,7 @@ export default async function LabPage() {
                       {project.demo && (
                         <Link
                           href={project.demo}
-                          className="text-slate-400 transition-colors hover:text-blue-600"
+                          className="text-slate-500 transition-colors hover:text-blue-400"
                         >
                           <FiArrowUpRight />
                         </Link>
@@ -86,39 +85,34 @@ export default async function LabPage() {
                     </div>
                   </div>
 
-                  {/* 기간 표시 (임시) */}
-                  <div className="mb-3 flex items-center gap-2 text-xs font-medium text-slate-400">
-                    <FiCalendar className="text-slate-300" />
+                  <div className="mb-4 flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-slate-500 uppercase">
+                    <FiCalendar className="text-blue-500/50" />
                     <span>2024.02 ~ 진행중</span>
-                    {/* 💡 팁: 나중에 노션에 'Date' 컬럼 만들어서 여기 연동하면 됨! */}
                   </div>
 
-                  <p className="mb-4 text-sm leading-relaxed text-slate-600">
+                  <p className="mb-6 text-base leading-relaxed text-slate-400">
                     {project.description}
                   </p>
 
-                  {/* 태그 (작고 심플하게) */}
                   <div className="mt-auto flex flex-wrap gap-2">
                     {project.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="inline-flex items-center rounded bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500"
+                        className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-bold text-slate-500 uppercase"
                       >
                         {tag}
                       </span>
                     ))}
                   </div>
                 </div>
-
-                {/* 카드 전체 클릭 가능하게 만드는 투명 링크 (UX) */}
                 {project.demo && (
                   <Link href={project.demo} className="absolute inset-0 z-10" />
                 )}
               </div>
             ))
           ) : (
-            <div className="py-20 text-center text-slate-400">
-              <p>프로젝트 준비 중입니다.</p>
+            <div className="py-40 text-center">
+              <p className="font-isyun text-slate-600">Loading Projects...</p>
             </div>
           )}
         </div>
