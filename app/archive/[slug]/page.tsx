@@ -59,6 +59,11 @@ interface NotionBlock {
     file?: { url: string };
     caption?: NotionRichText[];
   };
+  video?: {
+    type: 'external' | 'file';
+    external?: { url: string };
+    file?: { url: string };
+  };
   divider?: Record<string, never>;
 }
 
@@ -69,7 +74,6 @@ function TextRenderer({ richText }: { richText: NotionRichText[] }) {
       {richText.map((text, index) => {
         const { annotations } = text;
         let className = '';
-        // [수정] 볼드체 명도 강화
         if (annotations.bold)
           className +=
             ' font-bold text-white shadow-[0_0_15px_rgba(255,255,255,0.15)]';
@@ -106,6 +110,39 @@ function TextRenderer({ richText }: { richText: NotionRichText[] }) {
 function BlockRenderer({ block }: { block: NotionBlock }) {
   const { type } = block;
   const normalizedId = block.id.replace(/-/g, '');
+
+  // [수정] 비디오 블록 처리 로직 추가
+  if (type === 'video' && block.video) {
+    const src =
+      block.video.type === 'external'
+        ? block.video.external?.url
+        : block.video.file?.url;
+    if (!src) return null;
+
+    if (src.includes('youtube.com') || src.includes('youtu.be')) {
+      const videoId = src.includes('youtu.be')
+        ? src.split('/').pop()
+        : new URL(src).searchParams.get('v');
+      return (
+        <div className="my-14 aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl">
+          <iframe
+            src={`https://www.youtube.com/embed/${videoId}`}
+            className="h-full w-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      );
+    }
+    return (
+      <video
+        controls
+        className="my-14 w-full rounded-2xl border border-white/10 shadow-2xl"
+      >
+        <source src={src} />
+      </video>
+    );
+  }
 
   if (type === 'image' && block.image) {
     const src =
@@ -166,7 +203,6 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
       );
     case 'paragraph':
       return (
-        // [수정] 텍스트 색상을 slate-50으로 변경하여 가독성 극대화
         <p className="mb-8 text-[18px] leading-[1.85] font-normal tracking-tight text-slate-50">
           <TextRenderer richText={value.rich_text} />
         </p>
@@ -174,7 +210,6 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
     case 'bulleted_list_item':
     case 'numbered_list_item':
       return (
-        // [수정] 리스트 아이템 색상도 slate-50으로 통일
         <li
           className={`mb-4 ml-6 ${type === 'bulleted_list_item' ? 'list-disc' : 'list-decimal'} pl-3 text-[17px] leading-relaxed text-slate-50`}
         >
@@ -200,7 +235,6 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
   }
 }
 
-// ... extractToc 함수 생략 (기존과 동일)
 function extractToc(blocks: NotionBlock[]): TocItem[] {
   return blocks
     .filter((b) => b.type.startsWith('heading_'))
@@ -227,7 +261,6 @@ export default async function Page({ params }: Props) {
     <div className="min-h-screen bg-transparent px-6 pt-32 pb-40 font-sans selection:bg-blue-500/40">
       <div className="mx-auto flex max-w-6xl gap-16">
         <main className="min-w-0 flex-1">
-          {/* 상단 네비게이션 */}
           <div className="mb-14 flex items-center justify-between border-b border-white/10 pb-8">
             <Link
               href="/archive"
@@ -235,7 +268,6 @@ export default async function Page({ params }: Props) {
             >
               ← BACK TO INDEX
             </Link>
-
             <div className="flex items-center gap-5 text-[10px] font-black tracking-widest text-slate-400 uppercase">
               <time>{new Date(post.date).toLocaleDateString('ko-KR')}</time>
               <div className="h-1 w-1 rounded-full bg-slate-600" />
