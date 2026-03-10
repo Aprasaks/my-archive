@@ -13,6 +13,10 @@ type Props = {
 };
 
 export const revalidate = 60;
+
+/**
+ * [이슈 31, 32] 동적 메타데이터 생성 및 도메인 정규화
+ */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPageBySlug(slug);
@@ -23,10 +27,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  // 검색 결과에 노출될 풍성한 제목과 설명 설정
   const title = `${post.title} | Dechive`;
   const description = `인생 최적화 지식저장소 데카이브: ${post.title}에 대한 깊이 있는 기록입니다.`;
-  const siteUrl = 'https://www.demian.dev';
+  const siteUrl = 'https://demian.dev'; // 도메인 통일
 
   return {
     title,
@@ -40,7 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: 'article',
       images: [
         {
-          url: '/icon.png', // public 폴더에 있는 형의 '책+뇌' 아이콘!
+          url: '/icon.png', // public/icon.png (Recall Engine 크롭 버전)
           width: 1200,
           height: 630,
           alt: post.title,
@@ -54,6 +57,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
   };
 }
+
 interface Annotations {
   bold: boolean;
   italic: boolean;
@@ -145,7 +149,6 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
   const { type } = block;
   const normalizedId = block.id.replace(/-/g, '');
 
-  // [수정] 비디오 블록 처리 로직 추가
   if (type === 'video' && block.video) {
     const src =
       block.video.type === 'external'
@@ -287,12 +290,41 @@ export default async function Page({ params }: Props) {
   const post = await getPageBySlug(slug);
   if (!post) notFound();
 
+  // --- [이슈 33] JSON-LD 구조화 데이터 정의 ---
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'TechArticle',
+    headline: post.title,
+    description: `인생 최적화 지식저장소 데카이브: ${post.title}에 대한 깊이 있는 기록입니다.`,
+    image: 'https://demian.dev/icon.png',
+    datePublished: new Date(post.date).toISOString(),
+    author: {
+      '@type': 'Person',
+      name: 'Demian',
+      url: 'https://demian.dev',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Dechive',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://demian.dev/icon.png',
+      },
+    },
+  };
+
   const rawBlocks = await getPageContent(post.id);
   const blocks = rawBlocks as unknown as NotionBlock[];
   const toc = extractToc(blocks);
 
   return (
     <div className="min-h-screen bg-transparent px-6 pt-32 pb-40 font-sans selection:bg-blue-500/40">
+      {/* JSON-LD 삽입 */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+
       <div className="mx-auto flex max-w-6xl gap-16">
         <main className="min-w-0 flex-1">
           <div className="mb-14 flex items-center justify-between border-b border-white/10 pb-8">
