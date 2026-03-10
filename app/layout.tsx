@@ -21,6 +21,11 @@ export const metadata: Metadata = {
     'AI 활용',
     'TIL',
   ],
+  verification: {
+    other: {
+      'naver-site-verification': '173accf886bfb2de87c545ace289ccd00511cfbb',
+    },
+  },
   openGraph: {
     title: "Dechive - Demian's Archive",
     description: '모든 지식을 기록하고 공유하는 지식 아카이브',
