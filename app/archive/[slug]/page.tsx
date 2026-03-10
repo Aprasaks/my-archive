@@ -16,10 +16,44 @@ export const revalidate = 60;
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPageBySlug(slug);
-  if (!post) return { title: '페이지를 찾을 수 없음' };
-  return { title: post.title, description: `Demian's Archive: ${post.title}` };
-}
 
+  if (!post) {
+    return {
+      title: '페이지를 찾을 수 없음 | Dechive',
+    };
+  }
+
+  // 검색 결과에 노출될 풍성한 제목과 설명 설정
+  const title = `${post.title} | Dechive`;
+  const description = `인생 최적화 지식저장소 데카이브: ${post.title}에 대한 깊이 있는 기록입니다.`;
+  const siteUrl = 'https://www.demian.dev';
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${siteUrl}/archive/${slug}`,
+      siteName: 'Dechive',
+      locale: 'ko_KR',
+      type: 'article',
+      images: [
+        {
+          url: '/icon.png', // public 폴더에 있는 형의 '책+뇌' 아이콘!
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+  };
+}
 interface Annotations {
   bold: boolean;
   italic: boolean;
