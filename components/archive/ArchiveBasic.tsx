@@ -6,14 +6,15 @@ import { Post } from '@/lib/notion';
 
 interface ArchiveBasicProps {
   posts: Post[];
+  folders: Record<string, string>; // 폴더 ID와 이름을 매칭한 맵 추가
   initialQuery?: string;
 }
 
 export default function ArchiveBasic({
   posts,
+  folders,
   initialQuery = '',
 }: ArchiveBasicProps) {
-  // 검색 필터링 로직 (폴더 선택 기능은 상단 대분류로 대체될 예정이므로 쿼리 중심 유지)
   const filtered = useMemo(() => {
     let result = posts.filter((p) => p.type === 'Post');
 
@@ -31,7 +32,6 @@ export default function ArchiveBasic({
 
   return (
     <div className="font-isyun mx-auto">
-      {/* 검색어가 있을 때만 보여주는 안내 메시지 */}
       {initialQuery && (
         <div className="mb-8 border-l-2 border-blue-500 py-1 pl-4 text-sm text-slate-500">
           <span className="font-bold text-blue-500">
@@ -41,9 +41,6 @@ export default function ArchiveBasic({
         </div>
       )}
 
-      {/* [수정] 1. 기존 폴더 탭 영역 삭제 (상단 주제바로 일원화) */}
-
-      {/* 2. 글 리스트 영역: 사각형 느낌을 줄이기 위해 선 위주로 디자인 */}
       <div className="divide-y divide-white/5">
         {filtered.length > 0 ? (
           filtered.map((post) => (
@@ -54,10 +51,13 @@ export default function ArchiveBasic({
             >
               <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
                 <div className="flex-1">
-                  {/* 카테고리 태그 - 제목 위에 작게 표시 */}
+                  {/* [핵심 수정] post.category 대신 folders 맵에서 parentId로 이름을 찾아옴 */}
                   <div className="mb-2 text-[10px] font-bold tracking-widest text-blue-500/60 uppercase">
-                    {post.category || 'General'}
+                    {post.parentId
+                      ? folders[post.parentId] || 'Knowledge'
+                      : 'Knowledge'}
                   </div>
+
                   <h2 className="text-xl font-bold text-slate-200 transition-colors group-hover:text-white">
                     {post.title}
                   </h2>
@@ -65,7 +65,7 @@ export default function ArchiveBasic({
                     <span className="font-mono">
                       {post.date.split('T')[0].replace(/-/g, '.')}
                     </span>
-                    <span className="h-3 w-[1px] bg-white/10" />
+                    <span className="h-3 w-px bg-white/10" />
                     <span className="text-slate-600 group-hover:text-slate-400">
                       READ MORE
                     </span>
