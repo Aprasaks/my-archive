@@ -16,10 +16,13 @@ export default function ArchiveBasic({ posts, folders }: ArchiveBasicProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
+    // 빌드 타임이 아닌 브라우저 환경에서만 실행됨
     const handleUrlChange = () => {
       const params = new URLSearchParams(window.location.search);
       setCurrentTopic(params.get('topic') || 'ALL');
+      setSearchQuery(params.get('q') || '');
     };
+
     handleUrlChange();
     window.addEventListener('popstate', handleUrlChange);
     return () => window.removeEventListener('popstate', handleUrlChange);
@@ -28,14 +31,12 @@ export default function ArchiveBasic({ posts, folders }: ArchiveBasicProps) {
   const groupedData = useMemo(() => {
     let filtered = posts;
 
-    // 1. 토픽 필터
     if (currentTopic !== 'ALL') {
       filtered = filtered.filter(
         (p) => folders[p.parentId || ''] === currentTopic
       );
     }
 
-    // 2. 검색어 필터 (제목 + 태그)
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -45,7 +46,6 @@ export default function ArchiveBasic({ posts, folders }: ArchiveBasicProps) {
       );
     }
 
-    // 3. 그룹핑
     const groups: Record<string, Post[]> = {};
     filtered.forEach((post) => {
       const folderName = post.parentId ? folders[post.parentId] : 'Knowledge';
@@ -59,7 +59,6 @@ export default function ArchiveBasic({ posts, folders }: ArchiveBasicProps) {
   return (
     <div className="font-isyun mx-auto">
       <SearchBar value={searchQuery} onChange={setSearchQuery} />
-
       <div className="mt-8 space-y-6">
         {Object.keys(groupedData).length > 0 ? (
           Object.entries(groupedData).map(([folderName, folderPosts]) => (
