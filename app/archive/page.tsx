@@ -7,15 +7,9 @@ import { getAllItems } from '@/lib/notion';
 
 export const revalidate = 60;
 
-export default async function ArchivePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string }>; // topic은 여기서 안 씀!
-}) {
-  // 1. 노션 데이터 전체를 "딱 한 번만" 가져옴
+export default async function ArchivePage() {
+  // 1. 노션 데이터 전체를 서버 사이드에서 딱 한 번 가져옴
   const allData = await getAllItems();
-  const params = await searchParams;
-  const query = params.q;
 
   // 2. Folder ID:이름 매핑 맵 생성
   const folders = allData.reduce((acc: Record<string, string>, item) => {
@@ -28,42 +22,42 @@ export default async function ArchivePage({
     .filter((item) => item.type === 'Folder')
     .map((folder) => folder.title);
 
-  // 4. 필터링하지 않은 "전체" 포스트 목록
-  // 서버에서 거르지 않고 클라이언트(ArchiveBasic)로 다 보냅니다.
+  // 4. 전체 포스트 목록 (필터링 없이 전송)
   const allPosts = allData.filter((item) => item.type === 'Post');
 
   return (
     <div className="min-h-screen bg-transparent pt-32 pb-40">
       <div className="mx-auto max-w-5xl px-6">
-        {/* [1. 헤더] */}
-        <div className="mb-20 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-baseline gap-2">
-            <h1 className="font-isyun text-4xl font-black tracking-tighter text-white">
-              Dechive:
-            </h1>
-            <span className="font-isyun text-2xl font-black tracking-tighter text-white">
-              Brain
-            </span>
+        {/* 헤더 섹션 */}
+        <div className="mb-12 flex flex-col gap-6 border-b border-white/5 pb-12 md:flex-row md:items-end md:justify-between">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-baseline gap-2">
+              <h1 className="font-isyun text-5xl font-black tracking-tighter text-white">
+                Dechive:
+              </h1>
+              <span className="font-isyun text-3xl font-black tracking-tighter text-blue-500">
+                Brain
+              </span>
+            </div>
+            <p className="text-sm font-medium tracking-tight text-slate-500">
+              지식의 파편들을 기록하고 연결합니다.
+            </p>
           </div>
           <RequestPill />
         </div>
 
-        {/* [2. 주제바] - 클라이언트 컴포넌트 */}
+        {/* 주제 섹션바 */}
         <TopicBar topics={dynamicTopics} />
 
-        {/* [3. 리스트 영역] */}
+        {/* 검색 및 아코디언 리스트 섹션 */}
         <Suspense
           fallback={
             <div className="py-20 text-center font-mono text-xs text-slate-600 italic">
-              INITIALIZING_BRAIN...
+              LOADING_BRAIN_ASSETS...
             </div>
           }
         >
-          <ArchiveBasic
-            posts={allPosts}
-            folders={folders}
-            initialQuery={query || ''}
-          />
+          <ArchiveBasic posts={allPosts} folders={folders} />
         </Suspense>
       </div>
       <TopButton />
