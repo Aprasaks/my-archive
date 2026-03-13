@@ -7,7 +7,6 @@ import { getAllItems } from '@/lib/notion';
 
 export const revalidate = 60;
 
-// [수정] searchParams를 아예 인자에서 제거해서 eslint 경고 차단
 export default async function ArchivePage() {
   const allData = await getAllItems();
 
@@ -39,15 +38,15 @@ export default async function ArchivePage() {
           <RequestPill />
         </div>
 
-        <TopicBar topics={dynamicTopics} />
-
+        {/* 🔥🔥🔥 여기가 핵심! TopicBar도 Suspense 안으로 쏙 넣었어 🔥🔥🔥 */}
         <Suspense
           fallback={
             <div className="py-20 text-center font-mono text-xs text-slate-600 italic">
-              LOADING_BRAIN...
+              LOADING_BRAIN_ASSETS...
             </div>
           }
         >
+          <TopicBar topics={dynamicTopics} />
           <ArchiveBasic posts={allPosts} folders={folders} />
         </Suspense>
       </div>
