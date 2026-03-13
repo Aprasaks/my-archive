@@ -1,60 +1,37 @@
 'use client';
 
-import React, {
-  useMemo,
-  useState,
-  useEffect,
-  useSyncExternalStore,
-} from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation'; // [핵심] Next.js 공식 주소창 훅
 import { Post } from '@/lib/notion';
 import TopicAccordion from './TopicAccordion';
 import SearchBar from './SearchBar';
 
-// 서버/클라이언트 체크용 빈 함수
-const subscribe = () => () => {};
-
-export default function ArchiveBasic({
-  posts,
-  folders,
-}: {
+interface ArchiveBasicProps {
   posts: Post[];
   folders: Record<string, string>;
-}) {
-  // [핵심] 빌드 로봇에게 "넌 거짓말쟁이야!"라고 안 하고, 아주 세련되게 "지금은 서버야"라고 알려주는 법
-  const isClient = useSyncExternalStore(
-    subscribe,
-    () => true, // 브라우저일 땐 true
-    () => false // 서버(빌드)일 땐 false
-  );
+}
 
-  const [currentTopic, setCurrentTopic] = useState('ALL');
-  const [searchQuery, setSearchQuery] = useState('');
+export default function ArchiveBasic({ posts, folders }: ArchiveBasicProps) {
+  // 1. Next.js 공식 훅으로 주소창 정보를 안전하게 가져옴
+  const searchParams = useSearchParams();
+  const currentTopic = searchParams.get('topic') || 'ALL';
+  const initialQ = searchParams.get('q') || '';
 
-  useEffect(() => {
-    if (!isClient) return;
-
-    const updateFromUrl = () => {
-      const params = new URLSearchParams(window.location.search);
-      setCurrentTopic(params.get('topic') || 'ALL');
-      setSearchQuery(params.get('q') || '');
-    };
-
-    updateFromUrl();
-    window.addEventListener('popstate', updateFromUrl);
-    return () => window.removeEventListener('popstate', updateFromUrl);
-  }, [isClient]);
+  // 2. 검색창 칼반응을 위한 로컬 State (초기값은 주소창의 q)
+  const [searchQuery, setSearchQuery] = useState(initialQ);
 
   const groupedData = useMemo(() => {
-    // 빌드 로봇이 여길 지나갈 땐 아예 리스트를 안 그리게 해서 에러 방지
-    if (!isClient) return {};
-
     let filtered = posts;
+
+    // 3. 토픽 필터링 (주소창 기준)
     if (currentTopic !== 'ALL') {
       filtered = filtered.filter(
         (p) => folders[p.parentId || ''] === currentTopic
       );
     }
+
+    // 4. 검색어 필터링 (입력창 기준)
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -70,11 +47,9 @@ export default function ArchiveBasic({
       if (!groups[folderName]) groups[folderName] = [];
       groups[folderName].push(post);
     });
-    return groups;
-  }, [isClient, posts, currentTopic, searchQuery, folders]);
 
-  // 서버(빌드)일 때는 아무것도 안 보여주고 틀만 유지 (에러 0% 보장)
-  if (!isClient) return <div className="min-h-screen" />;
+    return groups;
+  }, [posts, currentTopic, searchQuery, folders]);
 
   return (
     <div className="font-isyun mx-auto">
