@@ -28,10 +28,10 @@ export default function DechiveRecallPage() {
           <span className="text-[10px] font-black tracking-[0.3em] text-blue-500 uppercase">
             # NOTION_TEMPLATE_01
           </span>
-          <h1 className="font-isyun mt-4 text-6xl font-black tracking-tighter text-white md:text-7xl">
+          <h1 className="font-main mt-4 text-6xl font-black tracking-tighter text-white md:text-7xl">
             Dechive: Recall
           </h1>
-          <p className="font-isyun mt-4 text-xl font-medium text-slate-400">
+          <p className="font-main mt-4 text-xl font-medium text-slate-400">
             복잡한 기록은 그만. 버튼 하나로 완성하는 당신의 몰입 아카이브.
           </p>
         </div>

@@ -74,7 +74,7 @@ export default function Comments({ slug }: { slug: string }) {
   };
 
   return (
-    <div className="font-isyun mt-24 border-t border-white/5 pt-16">
+    <div className="font-main mt-24 border-t border-white/5 pt-16">
       <div className="mb-10 flex items-center justify-between">
         <h3 className="text-xl font-black text-white">
           RESPONSE <span className="ml-2 text-blue-500">{comments.length}</span>

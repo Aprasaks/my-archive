@@ -42,7 +42,7 @@ export default function RequestPill() {
   };
 
   return (
-    <div className="font-isyun">
+    <div className="font-main">
       {/* 1. 알약 버튼 (다크 유리 질감 튜닝) */}
       <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/3 px-6 py-2.5 shadow-2xl backdrop-blur-xl transition-all duration-300 hover:border-blue-500/30 hover:bg-white/5 md:gap-5">
         <span className="text-[13px] font-bold tracking-tight text-slate-400">

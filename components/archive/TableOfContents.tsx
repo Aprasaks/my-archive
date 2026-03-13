@@ -38,7 +38,7 @@ export default function TableOfContents({ toc }: Props) {
   if (toc.length === 0) return null;
 
   return (
-    <nav className="font-isyun scrollbar-hide sticky top-32 max-h-[calc(100vh-160px)] overflow-y-auto pr-4">
+    <nav className="font-main scrollbar-hide sticky top-32 max-h-[calc(100vh-160px)] overflow-y-auto pr-4">
       {/* 목차 제목: 더 크고 진하게 */}
       <div className="mb-6 flex items-center gap-3">
         <div className="h-4 w-1 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.6)]" />

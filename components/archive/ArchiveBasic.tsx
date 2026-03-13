@@ -83,7 +83,7 @@ export default function ArchiveBasic({ posts, folders }: ArchiveBasicProps) {
   }, [posts, currentTopic, searchQuery, folders]);
 
   return (
-    <div className="font-isyun mx-auto">
+    <div className="font-main mx-auto">
       <SearchBar value={searchQuery} onChange={setSearchQuery} />
       <div className="mt-8 space-y-6">
         {Object.keys(groupedData).length > 0 ? (

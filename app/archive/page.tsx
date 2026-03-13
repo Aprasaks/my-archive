@@ -27,10 +27,10 @@ export default async function ArchivePage() {
         <div className="mb-12 flex flex-col gap-6 border-b border-white/5 pb-12 md:flex-row md:items-end md:justify-between">
           <div className="flex flex-col gap-2">
             <div className="flex items-baseline gap-2">
-              <h1 className="font-isyun text-5xl font-black tracking-tighter text-white">
+              <h1 className="font-main text-5xl font-black tracking-tighter text-white">
                 Dechive:
               </h1>
-              <span className="font-isyun text-3xl font-black tracking-tighter text-blue-500">
+              <span className="font-main text-3xl font-black tracking-tighter text-blue-500">
                 Brain
               </span>
             </div>

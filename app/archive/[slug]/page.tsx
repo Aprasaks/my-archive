@@ -215,7 +215,7 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
       return (
         <h1
           id={normalizedId}
-          className="font-isyun mt-20 mb-10 scroll-mt-32 text-4xl leading-tight font-black text-white"
+          className="font-main mt-20 mb-10 scroll-mt-32 text-4xl leading-tight font-black text-white"
         >
           <TextRenderer richText={value.rich_text} />
         </h1>
@@ -224,7 +224,7 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
       return (
         <h2
           id={normalizedId}
-          className="font-isyun mt-16 mb-8 scroll-mt-32 border-b border-white/15 pb-4 text-2xl font-bold text-slate-50"
+          className="font-main mt-16 mb-8 scroll-mt-32 border-b border-white/15 pb-4 text-2xl font-bold text-slate-50"
         >
           <TextRenderer richText={value.rich_text} />
         </h2>
@@ -233,7 +233,7 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
       return (
         <h3
           id={normalizedId}
-          className="font-isyun mt-12 mb-6 scroll-mt-32 text-xl font-bold text-slate-100"
+          className="font-main mt-12 mb-6 scroll-mt-32 text-xl font-bold text-slate-100"
         >
           <TextRenderer richText={value.rich_text} />
         </h3>
@@ -330,7 +330,7 @@ export default async function Page({ params }: Props) {
           <div className="mb-14 flex items-center justify-between border-b border-white/10 pb-8">
             <Link
               href="/archive"
-              className="font-isyun text-xs font-black tracking-widest text-slate-300 transition-all hover:text-blue-400"
+              className="font-main text-xs font-black tracking-widest text-slate-300 transition-all hover:text-blue-400"
             >
               ← BACK TO INDEX
             </Link>
@@ -342,7 +342,7 @@ export default async function Page({ params }: Props) {
           </div>
 
           <header className="mb-20">
-            <h1 className="font-isyun text-5xl leading-[1.2] font-black tracking-tighter text-white drop-shadow-lg md:text-6xl">
+            <h1 className="font-main text-5xl leading-[1.2] font-black tracking-tighter text-white drop-shadow-lg md:text-6xl">
               {post.title}
             </h1>
           </header>

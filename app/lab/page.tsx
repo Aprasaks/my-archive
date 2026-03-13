@@ -22,10 +22,10 @@ export default async function LabPage() {
         {/* 2. 헤더 영역: Archive의 6xl 폰트와 tracking-tighter 스타일 적용 */}
         <div className="flex flex-col justify-between gap-8 border-b border-white/5 pb-12 md:flex-row md:items-end">
           <div className="flex-1">
-            <h1 className="font-isyun text-6xl font-black tracking-tighter text-white">
+            <h1 className="font-main text-6xl font-black tracking-tighter text-white">
               Lab
             </h1>
-            <p className="font-isyun mt-2 text-sm font-medium tracking-[0.4em] text-slate-500 uppercase">
+            <p className="font-main mt-2 text-sm font-medium tracking-[0.4em] text-slate-500 uppercase">
               Project & Experiment System
             </p>
           </div>
@@ -112,7 +112,7 @@ export default async function LabPage() {
             ))
           ) : (
             <div className="py-40 text-center">
-              <p className="font-isyun text-slate-600">Loading Projects...</p>
+              <p className="font-main text-slate-600">Loading Projects...</p>
             </div>
           )}
         </div>

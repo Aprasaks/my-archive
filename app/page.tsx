@@ -48,7 +48,7 @@ export default async function Home() {
             <div className="flex items-center gap-3">
               <div className="h-6 w-0.75 bg-blue-500"></div>{' '}
               {/* w-[3px] 대신 표준 w-0.75 사용 */}
-              <h2 className="font-isyun text-3xl font-black tracking-tighter text-white md:text-4xl">
+              <h2 className="font-main text-3xl font-black tracking-tighter text-white md:text-4xl">
                 실시간 급상승 검색어
               </h2>
             </div>
@@ -107,7 +107,7 @@ export default async function Home() {
         <div className="flex w-full flex-col items-center opacity-40 transition-opacity hover:opacity-100 md:w-80 lg:items-end">
           {/* h-[280px] 대신 표준 h-70 사용 */}
           <div className="flex h-70 w-full flex-col items-center justify-center rounded-2xl border border-dashed border-white/20 bg-transparent p-6 text-center backdrop-blur-md">
-            <span className="font-isyun mb-2 text-2xl tracking-widest text-slate-600">
+            <span className="font-main mb-2 text-2xl tracking-widest text-slate-600">
               My Archive
             </span>
             <p className="font-mono text-[10px] tracking-widest text-slate-500 uppercase">
