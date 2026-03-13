@@ -7,7 +7,7 @@ import { getAllItems } from '@/lib/notion';
 
 export const revalidate = 60;
 
-// 에러 방지: 인자를 아예 받지 않거나, 쓰지 않는다면 지우는 게 빌드에 안전함
+// [수정] searchParams를 아예 인자에서 제거해서 eslint 경고 차단
 export default async function ArchivePage() {
   const allData = await getAllItems();
 
@@ -35,20 +35,16 @@ export default async function ArchivePage() {
                 Brain
               </span>
             </div>
-            <p className="text-sm font-medium tracking-tight text-slate-500">
-              지식의 파편들을 기록하고 연결합니다.
-            </p>
           </div>
           <RequestPill />
         </div>
 
         <TopicBar topics={dynamicTopics} />
 
-        {/* 빌드 에러 해결의 핵심: useSearchParams를 쓰는 컴포넌트는 반드시 Suspense로 감싸야 함 */}
         <Suspense
           fallback={
             <div className="py-20 text-center font-mono text-xs text-slate-600 italic">
-              INITIALIZING_BRAIN...
+              LOADING_BRAIN...
             </div>
           }
         >

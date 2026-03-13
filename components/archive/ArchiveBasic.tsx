@@ -1,42 +1,60 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, {
+  useMemo,
+  useState,
+  useEffect,
+  useSyncExternalStore,
+} from 'react';
 import Link from 'next/link';
 import { Post } from '@/lib/notion';
 import TopicAccordion from './TopicAccordion';
 import SearchBar from './SearchBar';
 
-interface ArchiveBasicProps {
-  posts: Post[];
-  folders: Record<string, string>;
+// [핵심] 서버와 클라이언트 상태를 안전하게 동기화하는 도우미 함수
+function subscribe() {
+  return () => {}; // 주소창 변경은 useEffect에서 따로 잡으므로 여기선 빈 함수
 }
 
-export default function ArchiveBasic({ posts, folders }: ArchiveBasicProps) {
+export default function ArchiveBasic({
+  posts,
+  folders,
+}: {
+  posts: Post[];
+  folders: Record<string, string>;
+}) {
+  // [수정] useEffect + setState 대신 이 방식을 쓰면 린트 경고가 원천 차단됨
+  const isClient = useSyncExternalStore(
+    subscribe,
+    () => true, // 클라이언트(브라우저)일 때 값
+    () => false // 서버(빌드 타임)일 때 값
+  );
+
   const [currentTopic, setCurrentTopic] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    // 빌드 타임이 아닌 브라우저 환경에서만 실행됨
-    const handleUrlChange = () => {
+    // 이제 isClient는 위에서 잡았으니, 여기선 주소창 로직만 신경 씀
+    const updateFromUrl = () => {
       const params = new URLSearchParams(window.location.search);
       setCurrentTopic(params.get('topic') || 'ALL');
       setSearchQuery(params.get('q') || '');
     };
 
-    handleUrlChange();
-    window.addEventListener('popstate', handleUrlChange);
-    return () => window.removeEventListener('popstate', handleUrlChange);
+    updateFromUrl();
+    window.addEventListener('popstate', updateFromUrl);
+    return () => window.removeEventListener('popstate', updateFromUrl);
   }, []);
 
   const groupedData = useMemo(() => {
-    let filtered = posts;
+    if (!isClient) return {}; // 빌드 시에는 빈 객체
 
+    let filtered = posts;
     if (currentTopic !== 'ALL') {
       filtered = filtered.filter(
         (p) => folders[p.parentId || ''] === currentTopic
       );
     }
-
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -52,9 +70,11 @@ export default function ArchiveBasic({ posts, folders }: ArchiveBasicProps) {
       if (!groups[folderName]) groups[folderName] = [];
       groups[folderName].push(post);
     });
-
     return groups;
-  }, [posts, currentTopic, searchQuery, folders]);
+  }, [isClient, posts, currentTopic, searchQuery, folders]);
+
+  // 마운트 전(서버) 레이아웃 껍데기
+  if (!isClient) return <div className="min-h-96 w-full" />;
 
   return (
     <div className="font-isyun mx-auto">
@@ -72,10 +92,10 @@ export default function ArchiveBasic({ posts, folders }: ArchiveBasicProps) {
                   <Link
                     key={post.id}
                     href={`/archive/${post.slug}`}
-                    className="group block py-4"
+                    className="group block py-4 transition-all"
                   >
                     <div className="flex items-center justify-between">
-                      <h2 className="text-lg font-medium text-slate-300 transition-colors group-hover:text-blue-400">
+                      <h2 className="text-lg font-medium text-slate-300 group-hover:text-blue-400">
                         {post.title}
                       </h2>
                       <span className="font-mono text-[11px] text-slate-600">
@@ -88,8 +108,8 @@ export default function ArchiveBasic({ posts, folders }: ArchiveBasicProps) {
             </TopicAccordion>
           ))
         ) : (
-          <div className="py-20 text-center text-sm tracking-widest text-slate-600 italic">
-            NO MATCHING DATA FOUND.
+          <div className="py-20 text-center text-sm text-slate-600 italic">
+            NO DATA FOUND.
           </div>
         )}
       </div>
