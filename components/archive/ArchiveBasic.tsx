@@ -11,10 +11,8 @@ import { Post } from '@/lib/notion';
 import TopicAccordion from './TopicAccordion';
 import SearchBar from './SearchBar';
 
-// [핵심] 서버와 클라이언트 상태를 안전하게 동기화하는 도우미 함수
-function subscribe() {
-  return () => {}; // 주소창 변경은 useEffect에서 따로 잡으므로 여기선 빈 함수
-}
+// 서버/클라이언트 체크용 빈 함수
+const subscribe = () => () => {};
 
 export default function ArchiveBasic({
   posts,
@@ -23,18 +21,19 @@ export default function ArchiveBasic({
   posts: Post[];
   folders: Record<string, string>;
 }) {
-  // [수정] useEffect + setState 대신 이 방식을 쓰면 린트 경고가 원천 차단됨
+  // [핵심] 빌드 로봇에게 "넌 거짓말쟁이야!"라고 안 하고, 아주 세련되게 "지금은 서버야"라고 알려주는 법
   const isClient = useSyncExternalStore(
     subscribe,
-    () => true, // 클라이언트(브라우저)일 때 값
-    () => false // 서버(빌드 타임)일 때 값
+    () => true, // 브라우저일 땐 true
+    () => false // 서버(빌드)일 땐 false
   );
 
   const [currentTopic, setCurrentTopic] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    // 이제 isClient는 위에서 잡았으니, 여기선 주소창 로직만 신경 씀
+    if (!isClient) return;
+
     const updateFromUrl = () => {
       const params = new URLSearchParams(window.location.search);
       setCurrentTopic(params.get('topic') || 'ALL');
@@ -44,10 +43,11 @@ export default function ArchiveBasic({
     updateFromUrl();
     window.addEventListener('popstate', updateFromUrl);
     return () => window.removeEventListener('popstate', updateFromUrl);
-  }, []);
+  }, [isClient]);
 
   const groupedData = useMemo(() => {
-    if (!isClient) return {}; // 빌드 시에는 빈 객체
+    // 빌드 로봇이 여길 지나갈 땐 아예 리스트를 안 그리게 해서 에러 방지
+    if (!isClient) return {};
 
     let filtered = posts;
     if (currentTopic !== 'ALL') {
@@ -73,8 +73,8 @@ export default function ArchiveBasic({
     return groups;
   }, [isClient, posts, currentTopic, searchQuery, folders]);
 
-  // 마운트 전(서버) 레이아웃 껍데기
-  if (!isClient) return <div className="min-h-96 w-full" />;
+  // 서버(빌드)일 때는 아무것도 안 보여주고 틀만 유지 (에러 0% 보장)
+  if (!isClient) return <div className="min-h-screen" />;
 
   return (
     <div className="font-isyun mx-auto">
