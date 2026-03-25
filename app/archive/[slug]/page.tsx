@@ -1,5 +1,5 @@
 import React from 'react';
-import { getPageBySlug, getPageContent } from '@/lib/notion';
+import { getPageBySlug, getPageContent } from '@/lib/notion'; // ✨ 사용하지 않는 Post 제거
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -7,6 +7,7 @@ import { Metadata } from 'next';
 import TableOfContents, { TocItem } from '@/components/archive/TableOfContents';
 import Comments from '@/components/archive/Comments';
 import CommentCount from '@/components/archive/CommentCount';
+// ✨ 사용하지 않는 BlockObjectResponse import 제거
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -15,7 +16,7 @@ type Props = {
 export const revalidate = 60;
 
 /**
- * [이슈 31, 32] 동적 메타데이터 생성 및 도메인 정규화
+ * [이슈 38] 동적 메타데이터 생성: 노션 Description 연동
  */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -28,8 +29,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const title = `${post.title} | Dechive`;
-  const description = `인생 최적화 지식저장소 데카이브: ${post.title}에 대한 깊이 있는 기록입니다.`;
-  const siteUrl = 'https://demian.dev'; // 도메인 통일
+  const description =
+    post.description ||
+    `인생 최적화 지식저장소 데카이브: ${post.title}에 대한 기록입니다.`;
+  const siteUrl = 'https://demian.dev';
 
   return {
     title,
@@ -43,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       type: 'article',
       images: [
         {
-          url: '/icon.png', // public/icon.png (Recall Engine 크롭 버전)
+          url: '/icon.png',
           width: 1200,
           height: 630,
           alt: post.title,
@@ -58,6 +61,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+// --- 타입 정의 (Strict) ---
 interface Annotations {
   bold: boolean;
   italic: boolean;
@@ -121,7 +125,7 @@ function TextRenderer({ richText }: { richText: NotionRichText[] }) {
           className += ' underline underline-offset-4 decoration-blue-500/60';
         if (annotations.code)
           className +=
-            ' bg-white/15 text-blue-300 font-mono px-1.5 py-0.5 rounded text-[0.85em] border border-white/10';
+            ' bg-white/10 text-blue-300 font-mono px-1.5 py-0.5 rounded text-[0.85em] border border-white/5';
 
         if (text.href) {
           return (
@@ -165,7 +169,6 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
           <iframe
             src={`https://www.youtube.com/embed/${videoId}`}
             className="h-full w-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
         </div>
@@ -224,7 +227,7 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
       return (
         <h2
           id={normalizedId}
-          className="font-main mt-16 mb-8 scroll-mt-32 border-b border-white/15 pb-4 text-2xl font-bold text-slate-50"
+          className="font-main mt-16 mb-8 scroll-mt-32 border-b border-white/10 pb-4 text-2xl font-bold text-slate-100"
         >
           <TextRenderer richText={value.rich_text} />
         </h2>
@@ -233,14 +236,14 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
       return (
         <h3
           id={normalizedId}
-          className="font-main mt-12 mb-6 scroll-mt-32 text-xl font-bold text-slate-100"
+          className="font-main mt-12 mb-6 scroll-mt-32 text-xl font-bold text-slate-200"
         >
           <TextRenderer richText={value.rich_text} />
         </h3>
       );
     case 'paragraph':
       return (
-        <p className="mb-8 text-[18px] leading-[1.85] font-normal tracking-tight text-slate-50">
+        <p className="mb-8 text-[18px] leading-[1.85] font-normal tracking-tight text-slate-200/90">
           <TextRenderer richText={value.rich_text} />
         </p>
       );
@@ -248,14 +251,14 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
     case 'numbered_list_item':
       return (
         <li
-          className={`mb-4 ml-6 ${type === 'bulleted_list_item' ? 'list-disc' : 'list-decimal'} pl-3 text-[17px] leading-relaxed text-slate-50`}
+          className={`mb-4 ml-6 ${type === 'bulleted_list_item' ? 'list-disc' : 'list-decimal'} pl-3 text-[17px] leading-relaxed text-slate-200`}
         >
           <TextRenderer richText={value.rich_text} />
         </li>
       );
     case 'code':
       return (
-        <pre className="my-10 overflow-x-auto rounded-2xl border border-white/10 bg-black/60 p-8 font-mono text-sm text-blue-200 shadow-inner">
+        <pre className="my-10 overflow-x-auto rounded-2xl border border-white/5 bg-zinc-900/50 p-8 font-mono text-sm text-blue-200/90 shadow-inner">
           <code className="leading-relaxed">
             {value.rich_text[0]?.plain_text}
           </code>
@@ -263,7 +266,7 @@ function BlockRenderer({ block }: { block: NotionBlock }) {
       );
     case 'quote':
       return (
-        <blockquote className="my-10 rounded-r-2xl border-l-4 border-blue-500/50 bg-blue-500/10 px-8 py-6 text-slate-50 italic">
+        <blockquote className="my-10 rounded-r-2xl border-l-4 border-blue-500/50 bg-blue-500/5 px-8 py-6 text-slate-200 italic">
           <TextRenderer richText={value.rich_text} />
         </blockquote>
       );
@@ -290,26 +293,20 @@ export default async function Page({ params }: Props) {
   const post = await getPageBySlug(slug);
   if (!post) notFound();
 
-  // --- [이슈 33] JSON-LD 구조화 데이터 정의 ---
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'TechArticle',
     headline: post.title,
-    description: `인생 최적화 지식저장소 데카이브: ${post.title}에 대한 깊이 있는 기록입니다.`,
+    description:
+      post.description ||
+      `인생 최적화 지식저장소 데카이브: ${post.title}에 대한 기록입니다.`,
     image: 'https://demian.dev/icon.png',
     datePublished: new Date(post.date).toISOString(),
-    author: {
-      '@type': 'Person',
-      name: 'Demian',
-      url: 'https://demian.dev',
-    },
+    author: { '@type': 'Person', name: 'Demian', url: 'https://demian.dev' },
     publisher: {
       '@type': 'Organization',
       name: 'Dechive',
-      logo: {
-        '@type': 'ImageObject',
-        url: 'https://demian.dev/icon.png',
-      },
+      logo: { '@type': 'ImageObject', url: 'https://demian.dev/icon.png' },
     },
   };
 
@@ -318,8 +315,7 @@ export default async function Page({ params }: Props) {
   const toc = extractToc(blocks);
 
   return (
-    <div className="min-h-screen bg-transparent px-6 pt-32 pb-40 font-sans selection:bg-blue-500/40">
-      {/* JSON-LD 삽입 */}
+    <div className="min-h-screen bg-transparent px-6 pt-32 pb-40 font-sans selection:bg-blue-500/30">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -330,19 +326,19 @@ export default async function Page({ params }: Props) {
           <div className="mb-14 flex items-center justify-between border-b border-white/10 pb-8">
             <Link
               href="/archive"
-              className="font-main text-xs font-black tracking-widest text-slate-300 transition-all hover:text-blue-400"
+              className="font-main text-xs font-black tracking-widest text-slate-400 transition-all hover:text-blue-400"
             >
               ← BACK TO INDEX
             </Link>
-            <div className="flex items-center gap-5 text-[10px] font-black tracking-widest text-slate-400 uppercase">
+            <div className="flex items-center gap-5 text-[10px] font-black tracking-widest text-slate-500 uppercase">
               <time>{new Date(post.date).toLocaleDateString('ko-KR')}</time>
-              <div className="h-1 w-1 rounded-full bg-slate-600" />
+              <div className="h-1 w-1 rounded-full bg-slate-700" />
               <CommentCount slug={post.slug} />
             </div>
           </div>
 
           <header className="mb-20">
-            <h1 className="font-main text-5xl leading-[1.2] font-black tracking-tighter text-white drop-shadow-lg md:text-6xl">
+            <h1 className="font-main text-5xl leading-[1.1] font-black tracking-tighter text-white drop-shadow-2xl md:text-6xl">
               {post.title}
             </h1>
           </header>
@@ -353,13 +349,13 @@ export default async function Page({ params }: Props) {
             ))}
           </article>
 
-          {post.tags.length > 0 && (
-            <section className="mt-24 border-t border-white/10 pt-10">
+          {post.tags && post.tags.length > 0 && (
+            <section className="mt-24 border-t border-white/5 pt-10">
               <div className="flex flex-wrap gap-2.5">
                 {post.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-full border border-white/20 bg-white/5 px-4 py-1.5 text-[10px] font-black tracking-wider text-slate-400 transition-colors hover:border-blue-500/50 hover:text-blue-300"
+                    className="rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-[10px] font-black tracking-wider text-slate-400 transition-colors hover:border-blue-500/40 hover:text-blue-300"
                   >
                     #{tag.toUpperCase()}
                   </span>

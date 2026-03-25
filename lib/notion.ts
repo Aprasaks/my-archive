@@ -2,6 +2,7 @@ import { Client } from '@notionhq/client';
 import {
   PageObjectResponse,
   PartialPageObjectResponse,
+  BlockObjectResponse,
 } from '@notionhq/client/build/src/api-endpoints';
 
 const notion = new Client({
@@ -11,13 +12,14 @@ const notion = new Client({
 const DATABASE_ID = process.env.NOTION_DATABASE_ID as string;
 
 // =========================================================
-// [Type Definition] 1. 결과물 데이터 타입
+// [Type Definition] 최종 결과물 데이터 규격
 // =========================================================
 
 export type Post = {
   id: string;
   title: string;
   slug: string;
+  description: string;
   type: 'Post' | 'Folder';
   tags: string[];
   date: string;
@@ -43,7 +45,7 @@ export type BdoRecipe = {
 };
 
 // =========================================================
-// [Interface] 2. 노션 데이터 구조 "팩트" 정의 (Strict Typing)
+// [Interface] 노션 프로퍼티 타입 정의 (Strict)
 // =========================================================
 
 type NotionTitle = { type: 'title'; title: Array<{ plain_text: string }> };
@@ -61,75 +63,65 @@ type NotionUrl = { type: 'url'; url: string | null };
 type NotionRelation = { type: 'relation'; relation: Array<{ id: string }> };
 type NotionStatus = { type: 'status'; status: { name: string } | null };
 
-// (1) [검은사막 DB] 구조
-interface BdoDatabaseProps {
-  Name: NotionTitle;
-  Tag: NotionSelect;
-  Tip: NotionRichText;
-  [key: string]:
-    | NotionTitle
-    | NotionSelect
-    | NotionRichText
-    | NotionNumber
-    | undefined;
-}
+type NotionProperty =
+  | NotionTitle
+  | NotionRichText
+  | NotionNumber
+  | NotionSelect
+  | NotionMultiSelect
+  | NotionUrl
+  | NotionRelation
+  | NotionStatus
+  | undefined;
 
-// (2) [프로젝트 DB] 구조
-interface ProjectDatabaseProps {
-  Name: NotionTitle;
-  Description: NotionRichText;
-  Tags: NotionMultiSelect;
-  Github: NotionUrl;
-  Demo: NotionUrl;
-  [key: string]:
-    | NotionTitle
-    | NotionSelect
-    | NotionRichText
-    | NotionNumber
-    | NotionUrl
-    | NotionMultiSelect
-    | undefined;
-}
-
-// (3) [블로그 DB] 구조
 interface BlogDatabaseProps {
   Name: NotionTitle;
   Slug: NotionRichText;
+  Description: NotionRichText;
   Type: NotionSelect;
   Tag: NotionMultiSelect;
   'Parent Item': NotionRelation;
   Status: NotionStatus;
 }
 
-// =========================================================
-// [Core Fix] V5 API 호환용 Client 및 Helper
-// =========================================================
-
-interface CustomQueryResponse {
-  results: (PageObjectResponse | PartialPageObjectResponse)[];
-  next_cursor: string | null;
-  has_more: boolean;
+interface ProjectDatabaseProps {
+  Name: NotionTitle;
+  Description: NotionRichText;
+  Tags: NotionMultiSelect;
+  Github: NotionUrl;
+  Demo: NotionUrl;
 }
+
+interface BdoDatabaseProps {
+  Name: NotionTitle;
+  Tag: NotionSelect;
+  Tip: NotionRichText;
+  [key: string]: NotionProperty;
+}
+
+// =========================================================
+// [Core] V5 API 대응 및 타입 캐스팅 (No Any!)
+// =========================================================
 
 interface StrictNotionClient {
   databases: {
-    // DB 정보 조회 (Data Source ID 얻기용)
     retrieve: (args: {
       database_id: string;
     }) => Promise<{ id: string; data_sources?: { id: string }[] }>;
   };
   dataSources: {
-    // 실제 쿼리 (이게 형 환경의 유일한 조회 방법!)
     query: (args: {
       data_source_id: string;
       filter?: object;
       sorts?: object;
-    }) => Promise<CustomQueryResponse>;
+    }) => Promise<{
+      results: (PageObjectResponse | PartialPageObjectResponse)[];
+    }>;
   };
   blocks: {
     children: {
       list: (args: { block_id: string }) => Promise<{
-        results: (PageObjectResponse | PartialPageObjectResponse)[];
+        results: (BlockObjectResponse | PartialPageObjectResponse)[]; // ✨ any 제거 완료!
       }>;
     };
   };
@@ -137,20 +129,16 @@ interface StrictNotionClient {
 
 const strictNotion = notion as unknown as StrictNotionClient;
 
-// ⭐ [Helper] V5 방식 쿼리 함수 (Retrieve -> Get ID -> Query)
 async function queryV5Database(
   databaseId: string,
   sorts?: object[],
   filter?: object
 ) {
-  // 1. DB 정보 가져와서 Data Source ID 찾기
   const db = await strictNotion.databases.retrieve({ database_id: databaseId });
   const dataSourceId = db.data_sources?.[0]?.id;
 
-  if (!dataSourceId)
-    throw new Error(`No Data Source ID found for DB: ${databaseId}`);
+  if (!dataSourceId) throw new Error(`Data Source ID missing: ${databaseId}`);
 
-  // 2. Data Source ID로 쿼리 실행
   return await strictNotion.dataSources.query({
     data_source_id: dataSourceId,
     sorts,
@@ -159,11 +147,10 @@ async function queryV5Database(
 }
 
 // =========================================================
-// [Function 1] 블로그 글 가져오기
+// [Functions] 데이터 연동 함수
 // =========================================================
 
 export async function getAllItems(): Promise<Post[]> {
-  // 👇 헬퍼 함수로 교체!
   const response = await queryV5Database(
     DATABASE_ID,
     [{ property: 'Date', direction: 'descending' }],
@@ -178,13 +165,12 @@ export async function getAllItems(): Promise<Post[]> {
       id: item.id,
       title: props.Name?.title?.[0]?.plain_text || '제목 없음',
       slug: props.Slug?.rich_text?.[0]?.plain_text || '',
+      description: props.Description?.rich_text?.[0]?.plain_text || '',
       type: (props.Type?.select?.name === 'Folder' ? 'Folder' : 'Post') as
         | 'Post'
         | 'Folder',
       tags: props.Tag?.multi_select?.map((tag) => tag.name) || [],
       date: item.created_time,
-      // [중요] 관계형 데이터에서 ID가 아니라 '연결된 폴더명'을 유추할 수 있도록 수정
-      // 일단 ID를 넘기되, 컴포넌트에서 이 ID를 슬러그와 매칭하게 할 거야.
       parentId: props['Parent Item']?.relation?.[0]?.id || null,
     };
   });
@@ -207,6 +193,7 @@ function createEmptyPost(id: string): Post {
     id,
     title: '접근 불가',
     slug: '',
+    description: '',
     type: 'Post',
     tags: [],
     date: '',
@@ -214,86 +201,62 @@ function createEmptyPost(id: string): Post {
   };
 }
 
-// =========================================================
-// [Function 2] LAB 프로젝트 목록
-// =========================================================
-
 export const getProjectList = async (): Promise<ProjectItem[]> => {
   if (!process.env.NOTION_PROJECT_ID) return [];
-
-  // 👇 헬퍼 함수로 교체! (databases.query -> dataSources.query)
   const response = await queryV5Database(process.env.NOTION_PROJECT_ID, [
     { property: 'Name', direction: 'ascending' },
   ]);
 
-  const validPages = response.results.filter(
-    (item): item is PageObjectResponse => 'properties' in item
-  );
+  return response.results
+    .filter((item): item is PageObjectResponse => 'properties' in item)
+    .map((item) => {
+      const props = item.properties as unknown as ProjectDatabaseProps;
+      let coverUrl = '/no-image.png';
 
-  return validPages.map((item) => {
-    const props = item.properties as unknown as ProjectDatabaseProps;
+      if (item.cover?.type === 'external') coverUrl = item.cover.external.url;
+      else if (item.cover?.type === 'file') coverUrl = item.cover.file.url;
 
-    let coverUrl = '/no-image.png';
-    if (item.cover) {
-      if (item.cover.type === 'external') coverUrl = item.cover.external.url;
-      else if (item.cover.type === 'file') coverUrl = item.cover.file.url;
-    }
-
-    return {
-      id: item.id,
-      title: props.Name?.title?.[0]?.plain_text || '제목 없음',
-      description: props.Description?.rich_text?.[0]?.plain_text || '',
-      tags: props.Tags?.multi_select?.map((tag) => tag.name) || [],
-      github: props.Github?.url || '',
-      demo: props.Demo?.url || '',
-      cover: coverUrl,
-    };
-  });
+      return {
+        id: item.id,
+        title: props.Name?.title?.[0]?.plain_text || '제목 없음',
+        description: props.Description?.rich_text?.[0]?.plain_text || '',
+        tags: props.Tags?.multi_select?.map((tag) => tag.name) || [],
+        github: props.Github?.url || '',
+        demo: props.Demo?.url || '',
+        cover: coverUrl,
+      };
+    });
 };
-
-// =========================================================
-// [Function 3] 검은사막 레시피
-// =========================================================
 
 export const getBdoRecipes = async (): Promise<BdoRecipe[]> => {
   if (!process.env.NOTION_RECIPE_ID) return [];
-
-  // 👇 헬퍼 함수로 교체! (여기도 문제였음!)
   const response = await queryV5Database(process.env.NOTION_RECIPE_ID, [
     { property: 'Name', direction: 'ascending' },
   ]);
 
-  const validPages = response.results.filter(
-    (item): item is PageObjectResponse => 'properties' in item
-  );
+  return response.results
+    .filter((item): item is PageObjectResponse => 'properties' in item)
+    .map((item) => {
+      const props = item.properties as unknown as BdoDatabaseProps;
+      const materials: { name: string; count: number }[] = [];
 
-  return validPages.map((item) => {
-    const props = item.properties as unknown as BdoDatabaseProps;
-    const materials: { name: string; count: number }[] = [];
+      for (let i = 1; i <= 5; i++) {
+        const textProp = props[`Stuff${i}_T`];
+        const numProp = props[`Stuff${i}_N`];
 
-    for (let i = 1; i <= 5; i++) {
-      const textKey = `Stuff${i}_T`;
-      const numKey = `Stuff${i}_N`;
-
-      const textProp = props[textKey];
-      const numProp = props[numKey];
-
-      if (textProp?.type === 'rich_text' && numProp?.type === 'number') {
-        const name = textProp.rich_text[0]?.plain_text;
-        const count = numProp.number;
-
-        if (name && count) {
-          materials.push({ name, count });
+        if (textProp?.type === 'rich_text' && numProp?.type === 'number') {
+          const name = textProp.rich_text[0]?.plain_text;
+          const count = numProp.number;
+          if (name && count) materials.push({ name, count });
         }
       }
-    }
 
-    return {
-      id: item.id,
-      name: props.Name?.title?.[0]?.plain_text || '이름 없음',
-      tag: props.Tag?.select?.name || '기타',
-      materials: materials,
-      tip: props.Tip?.rich_text?.[0]?.plain_text || '',
-    };
-  });
+      return {
+        id: item.id,
+        name: props.Name?.title?.[0]?.plain_text || '이름 없음',
+        tag: props.Tag?.select?.name || '기타',
+        materials,
+        tip: props.Tip?.rich_text?.[0]?.plain_text || '',
+      };
+    });
 };
