@@ -36,12 +36,12 @@ export default function Header() {
         >
           <div className="transition-transform duration-500 ease-out group-hover:scale-110">
             <Image
-              src="/images/logo-icon2.png"
+              src="/images/logo-icon.png"
               alt="Dechive Logo"
-              width={48}
-              height={48}
+              width={72}
+              height={72}
               priority
-              className="object-contain transition-all duration-300 group-hover:drop-shadow-[0_0_12px_rgba(212,175,55,0.4)]"
+              className="object-contain"
             />
           </div>
         </Link>
