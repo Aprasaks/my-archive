@@ -1,61 +1,62 @@
-import type { Metadata } from 'next';
+'use client';
+
+import { usePathname } from 'next/navigation';
+import Image from 'next/image';
 import './globals.css';
 import Header from '../components/layout/Header';
 import Footer from '@/components/layout/Footer';
-import InteractiveGrid from '../components/layout/InteractiveGrid';
 import { GoogleAnalytics } from '@next/third-parties/google';
 import Script from 'next/script';
 
-export const metadata: Metadata = {
-  metadataBase: new URL('https://demian.dev'),
-  title: {
-    template: '%s | Dechive',
-    default: "Dechive - Demian's Archive",
-  },
-  description: '모든 지식을 기록하고 공유하는 지식 아카이브, Dechive입니다.',
-  keywords: [
-    'Dechive',
-    'Demian',
-    'IT 기술 블로그',
-    '지식 아카이브',
-    'AI 활용',
-    'TIL',
-  ],
-  verification: {
-    other: {
-      'naver-site-verification': '173accf886bfb2de87c545ace289ccd00511cfbb',
-    },
-  },
-  openGraph: {
-    title: "Dechive - Demian's Archive",
-    description: '모든 지식을 기록하고 공유하는 지식 아카이브',
-    url: 'https://demian.dev',
-    siteName: 'Dechive',
-    locale: 'ko_KR',
-    type: 'website',
-  },
-};
-
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
+  const pathname = usePathname();
+  const isHome = pathname === '/';
   const gaId = process.env.NEXT_PUBLIC_GA_ID || '';
 
   return (
     <html lang="ko">
-      {/* 1. min-h-screen과 flex-col로 전체 높이를 화면에 맞추고 수직 구조 생성 */}
-      <body className="flex min-h-screen flex-col font-sans text-slate-900 antialiased">
-        <InteractiveGrid />
+      <body className="relative flex min-h-screen flex-col overflow-x-hidden bg-black font-sans text-slate-900 antialiased">
+        {/* 1. 🌟 전역 고정 배경 레이어 (가장 밑바닥) 🌟 */}
+        <div className="pointer-events-none fixed inset-0 z-0 flex h-full w-full justify-center bg-black">
+          <div className="relative h-full w-full max-w-480">
+            <Image
+              src="/images/library-main.webp"
+              alt="Dechive Library Background"
+              fill
+              priority
+              className={`object-cover object-center transition-all duration-700 ease-in-out ${
+                isHome
+                  ? 'blur-0 scale-100 opacity-85'
+                  : 'scale-105 opacity-30 blur-md'
+              }`}
+            />
+            <div className="absolute inset-y-0 left-0 w-40 bg-linear-to-r from-black to-transparent" />
+            <div className="absolute inset-y-0 right-0 w-40 bg-linear-to-l from-black to-transparent" />
+            <div className="absolute inset-0 bg-linear-to-b from-black/40 via-transparent to-black/80" />
+          </div>
+        </div>
+
         <Header />
 
-        {/* 2. flex-1: 헤더와 푸터를 제외한 나머지 모든 공간을 main이 차지함 */}
-        {/* pt-16: 헤더 높이만큼 상단 여백 확보 */}
-        <main className="relative z-10 flex-1 pt-16">{children}</main>
+        <main
+          className={`relative z-10 flex w-full flex-1 flex-col ${isHome ? 'pt-0' : 'mx-auto max-w-7xl px-6 pt-24'}`}
+        >
+          {children}
+        </main>
 
-        {/* 3. 이제 푸터는 내용이 짧으면 바닥에, 길면 내용 끝에 붙음 */}
-        <Footer />
+        <div
+          className={
+            isHome
+              ? 'absolute bottom-0 left-0 z-50 w-full'
+              : 'relative z-10 mt-auto w-full'
+          }
+        >
+          <Footer />
+        </div>
 
         <Script
           id="adsense-script"
