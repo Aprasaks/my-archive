@@ -32,7 +32,7 @@ export default function RootLayout({
               className={`object-cover object-center transition-all duration-700 ease-in-out ${
                 isHome
                   ? 'blur-0 scale-100 opacity-100'
-                  : 'blur-0 scale-105 opacity-80'
+                  : 'scale-100 opacity-80 blur-xs'
               }`}
             />
             <div className="absolute inset-y-0 left-0 w-40 bg-linear-to-r from-black to-transparent" />

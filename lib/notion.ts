@@ -1,9 +1,20 @@
+// src/lib/notion.ts
+
 import { Client } from '@notionhq/client';
 import {
   PageObjectResponse,
   PartialPageObjectResponse,
   BlockObjectResponse,
 } from '@notionhq/client/build/src/api-endpoints';
+
+import {
+  Post,
+  ProjectItem,
+  BdoRecipe,
+  BlogDatabaseProps,
+  ProjectDatabaseProps,
+  BdoDatabaseProps,
+} from '@/types/notion';
 
 const notion = new Client({
   auth: process.env.NOTION_API_KEY,
@@ -12,97 +23,8 @@ const notion = new Client({
 const DATABASE_ID = process.env.NOTION_DATABASE_ID as string;
 
 // =========================================================
-// [Type Definition] 최종 결과물 데이터 규격
+// [Core] V5 API 대응 및 타입 캐스팅
 // =========================================================
-
-export type Post = {
-  id: string;
-  title: string;
-  slug: string;
-  description: string;
-  type: 'Post' | 'Folder';
-  tags: string[];
-  date: string;
-  parentId: string | null;
-};
-
-export type ProjectItem = {
-  id: string;
-  title: string;
-  description: string;
-  tags: string[];
-  github: string;
-  demo: string;
-  cover: string;
-};
-
-export type BdoRecipe = {
-  id: string;
-  name: string;
-  tag: string;
-  materials: { name: string; count: number }[];
-  tip: string;
-};
-
-// =========================================================
-// [Interface] 노션 프로퍼티 타입 정의 (Strict)
-// =========================================================
-
-type NotionTitle = { type: 'title'; title: Array<{ plain_text: string }> };
-type NotionRichText = {
-  type: 'rich_text';
-  rich_text: Array<{ plain_text: string }>;
-};
-type NotionNumber = { type: 'number'; number: number | null };
-type NotionSelect = { type: 'select'; select: { name: string } | null };
-type NotionMultiSelect = {
-  type: 'multi_select';
-  multi_select: Array<{ name: string }>;
-};
-type NotionUrl = { type: 'url'; url: string | null };
-type NotionRelation = { type: 'relation'; relation: Array<{ id: string }> };
-type NotionStatus = { type: 'status'; status: { name: string } | null };
-
-type NotionProperty =
-  | NotionTitle
-  | NotionRichText
-  | NotionNumber
-  | NotionSelect
-  | NotionMultiSelect
-  | NotionUrl
-  | NotionRelation
-  | NotionStatus
-  | undefined;
-
-interface BlogDatabaseProps {
-  Name: NotionTitle;
-  Slug: NotionRichText;
-  Description: NotionRichText;
-  Type: NotionSelect;
-  Tag: NotionMultiSelect;
-  'Parent Item': NotionRelation;
-  Status: NotionStatus;
-}
-
-interface ProjectDatabaseProps {
-  Name: NotionTitle;
-  Description: NotionRichText;
-  Tags: NotionMultiSelect;
-  Github: NotionUrl;
-  Demo: NotionUrl;
-}
-
-interface BdoDatabaseProps {
-  Name: NotionTitle;
-  Tag: NotionSelect;
-  Tip: NotionRichText;
-  [key: string]: NotionProperty;
-}
-
-// =========================================================
-// [Core] V5 API 대응 및 타입 캐스팅 (No Any!)
-// =========================================================
-
 interface StrictNotionClient {
   databases: {
     retrieve: (args: {
@@ -121,7 +43,7 @@ interface StrictNotionClient {
   blocks: {
     children: {
       list: (args: { block_id: string }) => Promise<{
-        results: (BlockObjectResponse | PartialPageObjectResponse)[]; // ✨ any 제거 완료!
+        results: (BlockObjectResponse | PartialPageObjectResponse)[];
       }>;
     };
   };
@@ -147,7 +69,7 @@ async function queryV5Database(
 }
 
 // =========================================================
-// [Functions] 데이터 연동 함수
+// [Functions] 데이터 연동 함수들
 // =========================================================
 
 export async function getAllItems(): Promise<Post[]> {
@@ -164,13 +86,14 @@ export async function getAllItems(): Promise<Post[]> {
     return {
       id: item.id,
       title: props.Name?.title?.[0]?.plain_text || '제목 없음',
+      subtitle: props.Subtitle?.rich_text?.[0]?.plain_text || '',
       slug: props.Slug?.rich_text?.[0]?.plain_text || '',
       description: props.Description?.rich_text?.[0]?.plain_text || '',
       type: (props.Type?.select?.name === 'Folder' ? 'Folder' : 'Post') as
         | 'Post'
         | 'Folder',
       tags: props.Tag?.multi_select?.map((tag) => tag.name) || [],
-      date: item.created_time,
+      date: 'created_time' in item ? item.created_time : '',
       parentId: props['Parent Item']?.relation?.[0]?.id || null,
     };
   });
@@ -192,6 +115,7 @@ function createEmptyPost(id: string): Post {
   return {
     id,
     title: '접근 불가',
+    subtitle: '',
     slug: '',
     description: '',
     type: 'Post',
@@ -213,8 +137,10 @@ export const getProjectList = async (): Promise<ProjectItem[]> => {
       const props = item.properties as unknown as ProjectDatabaseProps;
       let coverUrl = '/no-image.png';
 
-      if (item.cover?.type === 'external') coverUrl = item.cover.external.url;
-      else if (item.cover?.type === 'file') coverUrl = item.cover.file.url;
+      if ('cover' in item && item.cover?.type === 'external')
+        coverUrl = item.cover.external.url;
+      else if ('cover' in item && item.cover?.type === 'file')
+        coverUrl = item.cover.file.url;
 
       return {
         id: item.id,

@@ -1,13 +1,13 @@
 import React from 'react';
-import { getPageBySlug, getPageContent } from '@/lib/notion'; // ✨ 사용하지 않는 Post 제거
+import { getPageBySlug, getPageContent } from '@/lib/notion';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Metadata } from 'next';
-import TableOfContents, { TocItem } from '@/components/archive/TableOfContents';
-import Comments from '@/components/archive/Comments';
-import CommentCount from '@/components/archive/CommentCount';
-// ✨ 사용하지 않는 BlockObjectResponse import 제거
+// ✅ Comments, CommentCount 임포트 삭제됨
+
+// 🌟 1. 렌더러 컴포넌트와 타입 임포트
+import NotionRenderer from '@/components/notion/NotionRenderer';
+import { NotionBlock } from '@/types/notion';
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -16,364 +16,82 @@ type Props = {
 export const revalidate = 60;
 
 /**
- * [이슈 38] 동적 메타데이터 생성: 노션 Description 연동
+ * [이슈 38] 동적 메타데이터 생성
  */
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPageBySlug(slug);
-
-  if (!post) {
-    return {
-      title: '페이지를 찾을 수 없음 | Dechive',
-    };
-  }
+  if (!post) return { title: '페이지를 찾을 수 없음 | Dechive' };
 
   const title = `${post.title} | Dechive`;
   const description =
     post.description ||
     `인생 최적화 지식저장소 데카이브: ${post.title}에 대한 기록입니다.`;
-  const siteUrl = 'https://demian.dev';
-
   return {
     title,
     description,
     openGraph: {
       title,
       description,
-      url: `${siteUrl}/archive/${slug}`,
+      url: `https://demian.dev/archive/${slug}`,
       siteName: 'Dechive',
       locale: 'ko_KR',
       type: 'article',
-      images: [
-        {
-          url: '/icon.png',
-          width: 1200,
-          height: 630,
-          alt: post.title,
-        },
-      ],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
     },
   };
 }
 
-// --- 타입 정의 (Strict) ---
-interface Annotations {
-  bold: boolean;
-  italic: boolean;
-  strikethrough: boolean;
-  underline: boolean;
-  code: boolean;
-  color: string;
-}
-
-interface NotionRichText {
-  plain_text: string;
-  annotations: Annotations;
-  href?: string | null;
-}
-
-interface BlockValue {
-  rich_text: NotionRichText[];
-  language?: string;
-  icon?: { emoji?: string };
-}
-
-interface NotionBlock {
-  id: string;
-  type: string;
-  heading_1?: BlockValue;
-  heading_2?: BlockValue;
-  heading_3?: BlockValue;
-  paragraph?: BlockValue;
-  bulleted_list_item?: BlockValue;
-  numbered_list_item?: BlockValue;
-  code?: BlockValue;
-  quote?: BlockValue;
-  callout?: BlockValue;
-  image?: {
-    type: 'external' | 'file';
-    external?: { url: string };
-    file?: { url: string };
-    caption?: NotionRichText[];
-  };
-  video?: {
-    type: 'external' | 'file';
-    external?: { url: string };
-    file?: { url: string };
-  };
-  divider?: Record<string, never>;
-}
-
-function TextRenderer({ richText }: { richText: NotionRichText[] }) {
-  if (!richText) return null;
-  return (
-    <>
-      {richText.map((text, index) => {
-        const { annotations } = text;
-        let className = '';
-        if (annotations.bold)
-          className +=
-            ' font-bold text-white shadow-[0_0_15px_rgba(255,255,255,0.15)]';
-        if (annotations.italic) className += ' italic text-slate-50';
-        if (annotations.strikethrough) className += ' line-through opacity-40';
-        if (annotations.underline)
-          className += ' underline underline-offset-4 decoration-blue-500/60';
-        if (annotations.code)
-          className +=
-            ' bg-white/10 text-blue-300 font-mono px-1.5 py-0.5 rounded text-[0.85em] border border-white/5';
-
-        if (text.href) {
-          return (
-            <Link
-              key={index}
-              href={text.href}
-              className={`${className} text-blue-400 underline decoration-blue-400/30 transition-colors hover:text-blue-300 hover:decoration-blue-300`}
-            >
-              {text.plain_text}
-            </Link>
-          );
-        }
-
-        return (
-          <span key={index} className={className}>
-            {text.plain_text}
-          </span>
-        );
-      })}
-    </>
-  );
-}
-
-function BlockRenderer({ block }: { block: NotionBlock }) {
-  const { type } = block;
-  const normalizedId = block.id.replace(/-/g, '');
-
-  if (type === 'video' && block.video) {
-    const src =
-      block.video.type === 'external'
-        ? block.video.external?.url
-        : block.video.file?.url;
-    if (!src) return null;
-
-    if (src.includes('youtube.com') || src.includes('youtu.be')) {
-      const videoId = src.includes('youtu.be')
-        ? src.split('/').pop()
-        : new URL(src).searchParams.get('v');
-      return (
-        <div className="my-14 aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-black shadow-2xl">
-          <iframe
-            src={`https://www.youtube.com/embed/${videoId}`}
-            className="h-full w-full"
-            allowFullScreen
-          />
-        </div>
-      );
-    }
-    return (
-      <video
-        controls
-        className="my-14 w-full rounded-2xl border border-white/10 shadow-2xl"
-      >
-        <source src={src} />
-      </video>
-    );
-  }
-
-  if (type === 'image' && block.image) {
-    const src =
-      block.image.type === 'external'
-        ? block.image.external?.url
-        : block.image.file?.url;
-    if (!src) return null;
-    return (
-      <figure className="my-14 flex flex-col items-center justify-center">
-        <div className="relative w-full overflow-hidden rounded-2xl border border-white/5 shadow-2xl">
-          <Image
-            src={src}
-            alt="Post content"
-            width={1000}
-            height={600}
-            className="h-auto w-full object-contain"
-            unoptimized
-          />
-        </div>
-      </figure>
-    );
-  }
-
-  if (type === 'divider') return <hr className="my-12 border-white/10" />;
-
-  const value = block[
-    type as keyof Omit<NotionBlock, 'id' | 'type'>
-  ] as BlockValue;
-  if (!value?.rich_text) return null;
-
-  switch (type) {
-    case 'heading_1':
-      return (
-        <h1
-          id={normalizedId}
-          className="font-main mt-20 mb-10 scroll-mt-32 text-4xl leading-tight font-black text-white"
-        >
-          <TextRenderer richText={value.rich_text} />
-        </h1>
-      );
-    case 'heading_2':
-      return (
-        <h2
-          id={normalizedId}
-          className="font-main mt-16 mb-8 scroll-mt-32 border-b border-white/10 pb-4 text-2xl font-bold text-slate-100"
-        >
-          <TextRenderer richText={value.rich_text} />
-        </h2>
-      );
-    case 'heading_3':
-      return (
-        <h3
-          id={normalizedId}
-          className="font-main mt-12 mb-6 scroll-mt-32 text-xl font-bold text-slate-200"
-        >
-          <TextRenderer richText={value.rich_text} />
-        </h3>
-      );
-    case 'paragraph':
-      return (
-        <p className="mb-8 text-[18px] leading-[1.85] font-normal tracking-tight text-slate-200/90">
-          <TextRenderer richText={value.rich_text} />
-        </p>
-      );
-    case 'bulleted_list_item':
-    case 'numbered_list_item':
-      return (
-        <li
-          className={`mb-4 ml-6 ${type === 'bulleted_list_item' ? 'list-disc' : 'list-decimal'} pl-3 text-[17px] leading-relaxed text-slate-200`}
-        >
-          <TextRenderer richText={value.rich_text} />
-        </li>
-      );
-    case 'code':
-      return (
-        <pre className="my-10 overflow-x-auto rounded-2xl border border-white/5 bg-zinc-900/50 p-8 font-mono text-sm text-blue-200/90 shadow-inner">
-          <code className="leading-relaxed">
-            {value.rich_text[0]?.plain_text}
-          </code>
-        </pre>
-      );
-    case 'quote':
-      return (
-        <blockquote className="my-10 rounded-r-2xl border-l-4 border-blue-500/50 bg-blue-500/5 px-8 py-6 text-slate-200 italic">
-          <TextRenderer richText={value.rich_text} />
-        </blockquote>
-      );
-    default:
-      return null;
-  }
-}
-
-function extractToc(blocks: NotionBlock[]): TocItem[] {
-  return blocks
-    .filter((b) => b.type.startsWith('heading_'))
-    .map((b) => {
-      const val = b[b.type as keyof NotionBlock] as BlockValue;
-      return {
-        id: b.id.replace(/-/g, ''),
-        text: val?.rich_text[0]?.plain_text || '',
-        level: parseInt(b.type.split('_')[1]),
-      };
-    });
-}
-
+// --- 🏛️ 메인 페이지 컴포넌트 ---
 export default async function Page({ params }: Props) {
   const { slug } = await params;
   const post = await getPageBySlug(slug);
   if (!post) notFound();
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'TechArticle',
-    headline: post.title,
-    description:
-      post.description ||
-      `인생 최적화 지식저장소 데카이브: ${post.title}에 대한 기록입니다.`,
-    image: 'https://demian.dev/icon.png',
-    datePublished: new Date(post.date).toISOString(),
-    author: { '@type': 'Person', name: 'Demian', url: 'https://demian.dev' },
-    publisher: {
-      '@type': 'Organization',
-      name: 'Dechive',
-      logo: { '@type': 'ImageObject', url: 'https://demian.dev/icon.png' },
-    },
-  };
-
+  // 노션에서 블록 데이터 가져오기 (타입 캐스팅)
   const rawBlocks = await getPageContent(post.id);
   const blocks = rawBlocks as unknown as NotionBlock[];
-  const toc = extractToc(blocks);
 
   return (
-    <div className="min-h-screen bg-transparent px-6 pt-32 pb-40 font-sans selection:bg-blue-500/30">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+    <div className="relative min-h-screen w-full overflow-x-hidden bg-transparent">
+      {/* 🌟 1. 배경 어두움 처리 */}
+      <div className="pointer-events-none fixed inset-0 z-0 bg-black/40" />
 
-      <div className="mx-auto flex max-w-6xl gap-16">
-        <main className="min-w-0 flex-1">
-          <div className="mb-14 flex items-center justify-between border-b border-white/10 pb-8">
+      {/* 🌟 2. 메인 컨텐츠 컨테이너 */}
+      <div className="relative z-10 mx-auto flex max-w-275 flex-col items-center px-6 pt-16 pb-60">
+        {/* 🌟 3. 본문: 글래스모피즘 플레이트 */}
+        <main className="relative w-full rounded-[40px] border border-white/10 bg-black/20 px-8 py-12 shadow-[0_50px_150px_rgba(0,0,0,0.8)] backdrop-blur-xs selection:bg-amber-500/30 selection:text-amber-100 md:px-20 md:py-16">
+          {/* 🌟 [수정] 상단 네비게이션 & 메인 제목(Title) 영역 🌟 */}
+          <div className="mb-12 flex items-center justify-between font-bold tracking-tight">
             <Link
               href="/archive"
-              className="font-main text-xs font-black tracking-widest text-slate-400 transition-all hover:text-blue-400"
+              className="group flex items-center gap-2 text-[11px] tracking-[0.2em] text-white/30 uppercase transition-all hover:text-white"
             >
-              ← BACK TO INDEX
+              <span className="transition-transform group-hover:-translate-x-1">
+                ←
+              </span>
+              <span>서재로 돌아가기</span>
             </Link>
-            <div className="flex items-center gap-5 text-[10px] font-black tracking-widest text-slate-500 uppercase">
-              <time>{new Date(post.date).toLocaleDateString('ko-KR')}</time>
-              <div className="h-1 w-1 rounded-full bg-slate-700" />
-              <CommentCount slug={post.slug} />
-            </div>
+
+            <span className="max-w-[60%] text-right text-[11px] tracking-widest break-keep text-white/40 uppercase">
+              {post.title}
+            </span>
           </div>
 
-          <header className="mb-20">
-            <h1 className="font-main text-5xl leading-[1.1] font-black tracking-tighter text-white drop-shadow-2xl md:text-6xl">
-              {post.title}
+          <header className="mb-16 text-left">
+            <h1 className="font-main text-3xl leading-tight font-black tracking-tighter break-keep text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)] md:text-4xl">
+              {post.subtitle || post.title}
             </h1>
+
+            {/* ✅ 날짜만 남기고 댓글 수(CommentCount) 삭제 */}
+            <div className="mt-6 flex items-center gap-4 text-[10px] font-bold tracking-widest text-white/20 uppercase">
+              <time>{new Date(post.date).toLocaleDateString('ko-KR')}</time>
+            </div>
           </header>
 
-          <article className="prose prose-invert max-w-none">
-            {blocks.map((block) => (
-              <BlockRenderer key={block.id} block={block} />
-            ))}
-          </article>
+          <NotionRenderer blocks={blocks} />
 
-          {post.tags && post.tags.length > 0 && (
-            <section className="mt-24 border-t border-white/5 pt-10">
-              <div className="flex flex-wrap gap-2.5">
-                {post.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-[10px] font-black tracking-wider text-slate-400 transition-colors hover:border-blue-500/40 hover:text-blue-300"
-                  >
-                    #{tag.toUpperCase()}
-                  </span>
-                ))}
-              </div>
-            </section>
-          )}
-
-          <div className="mt-24">
-            <Comments slug={post.slug} />
-          </div>
+          {/* ✅ 하단 댓글 섹션(Comments) 전체 삭제됨 */}
         </main>
-
-        <aside className="hidden w-64 shrink-0 lg:block">
-          <div className="sticky top-32">
-            <TableOfContents toc={toc} />
-          </div>
-        </aside>
       </div>
     </div>
   );
