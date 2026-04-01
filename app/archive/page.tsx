@@ -1,56 +1,50 @@
 import React, { Suspense } from 'react';
-import ArchiveBasic from '@/components/archive/ArchiveBasic';
-import TopicBar from '@/components/archive/TopicBar';
-import RequestPill from '@/components/archive/RequestPill';
-import TopButton from '@/components/common/TopButton';
+import ArchiveClient from '@/components/archive/ArchiveClient';
 import { getAllItems } from '@/lib/notion';
+import { NotionItem, Post, FolderMap } from '@/types/archive'; // 🌟 타입들 총동원
 
 export const revalidate = 60;
 
 export default async function ArchivePage() {
-  const allData = await getAllItems();
+  // 🌟 getAllItems 결과가 NotionItem 배열이라고 명시!
+  const allData: NotionItem[] = await getAllItems();
 
-  const folders = allData.reduce((acc: Record<string, string>, item) => {
-    if (item.type === 'Folder') acc[item.id] = item.title;
-    return acc;
-  }, {});
+  // 1. 폴더 데이터 매핑 (any 삭제)
+  const folders: FolderMap = allData.reduce(
+    (acc: FolderMap, item: NotionItem) => {
+      if (item.type === 'Folder') acc[item.id] = item.title;
+      return acc;
+    },
+    {}
+  );
 
-  const dynamicTopics = allData
-    .filter((item) => item.type === 'Folder')
-    .map((folder) => folder.title);
+  // 2. 카테고리 목록 추출 (any 삭제)
+  const dynamicTopics: string[] = allData
+    .filter((item: NotionItem) => item.type === 'Folder')
+    .map((folder: NotionItem) => folder.title);
 
-  const allPosts = allData.filter((item) => item.type === 'Post');
+  // 3. 실제 포스트 추출 (any 삭제)
+  const allPosts: Post[] = allData.filter(
+    (item: NotionItem) => item.type === 'Post'
+  );
 
   return (
-    <div className="min-h-screen bg-transparent pt-32 pb-40">
-      <div className="mx-auto max-w-5xl px-6">
-        <div className="mb-12 flex flex-col gap-6 border-b border-white/5 pb-12 md:flex-row md:items-end md:justify-between">
-          <div className="flex flex-col gap-2">
-            <div className="flex items-baseline gap-2">
-              <h1 className="font-main text-5xl font-black tracking-tighter text-white">
-                Dechive:
-              </h1>
-              <span className="font-main text-3xl font-black tracking-tighter text-blue-500">
-                Brain
-              </span>
-            </div>
-          </div>
-          <RequestPill />
-        </div>
-
-        {/* 🔥🔥🔥 여기가 핵심! TopicBar도 Suspense 안으로 쏙 넣었어 🔥🔥🔥 */}
+    <div className="min-h-screen pt-24 pb-40">
+      <div className="mx-auto max-w-7xl px-6 lg:px-10">
         <Suspense
           fallback={
-            <div className="py-20 text-center font-mono text-xs text-slate-600 italic">
-              LOADING_BRAIN_ASSETS...
+            <div className="py-20 text-center font-mono text-xs text-slate-400 italic">
+              INITIALIZING_DECHIVE...
             </div>
           }
         >
-          <TopicBar topics={dynamicTopics} />
-          <ArchiveBasic posts={allPosts} folders={folders} />
+          <ArchiveClient
+            initialPosts={allPosts}
+            folders={folders}
+            topics={dynamicTopics}
+          />
         </Suspense>
       </div>
-      <TopButton />
     </div>
   );
 }

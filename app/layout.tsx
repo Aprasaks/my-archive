@@ -5,6 +5,7 @@ import Image from 'next/image';
 import './globals.css';
 import Header from '../components/layout/Header';
 import Footer from '@/components/layout/Footer';
+import TopButton from '@/components/common/TopButton'; // 💀 탑버튼 추가
 import { GoogleAnalytics } from '@next/third-parties/google';
 import Script from 'next/script';
 
@@ -30,8 +31,8 @@ export default function RootLayout({
               priority
               className={`object-cover object-center transition-all duration-700 ease-in-out ${
                 isHome
-                  ? 'blur-0 scale-100 opacity-85'
-                  : 'scale-105 opacity-30 blur-md'
+                  ? 'blur-0 scale-100 opacity-100'
+                  : 'blur-0 scale-105 opacity-80'
               }`}
             />
             <div className="absolute inset-y-0 left-0 w-40 bg-linear-to-r from-black to-transparent" />
@@ -57,6 +58,9 @@ export default function RootLayout({
         >
           <Footer />
         </div>
+
+        {/* 🌟 여기에 탑버튼 딱 넣어뒀어! 🌟 */}
+        <TopButton />
 
         <Script
           id="adsense-script"
