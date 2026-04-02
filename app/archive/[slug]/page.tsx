@@ -1,9 +1,8 @@
 import React from 'react';
-import { getPageBySlug, getPageContent } from '@/lib/notion';
+import { getPageBySlug, getPageContent, getAllItems } from '@/lib/notion';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Metadata } from 'next';
-// ✅ Comments, CommentCount 임포트 삭제됨
 
 // 🌟 1. 렌더러 컴포넌트와 타입 임포트
 import NotionRenderer from '@/components/notion/NotionRenderer';
@@ -15,9 +14,14 @@ type Props = {
 
 export const revalidate = 60;
 
-/**
- * [이슈 38] 동적 메타데이터 생성
- */
+export async function generateStaticParams() {
+  const posts = await getAllItems();
+
+  return posts.map((post) => ({
+    slug: post.slug,
+  }));
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPageBySlug(slug);
