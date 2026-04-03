@@ -8,7 +8,7 @@ import Footer from '@/components/layout/Footer';
 import TopButton from '@/components/common/TopButton'; // 💀 탑버튼 추가
 import { GoogleAnalytics } from '@next/third-parties/google';
 import Script from 'next/script';
-import ChatBot from '@/components/common/Chatbot';
+import ChatBot from '@/components/common/Chatbot/ChatBot';
 
 export default function RootLayout({
   children,
