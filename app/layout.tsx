@@ -21,6 +21,9 @@ export default function RootLayout({
 
   return (
     <html lang="ko">
+      <head>
+        <meta name="robots" content="noindex, nofollow" />
+      </head>
       <body className="relative flex min-h-screen flex-col overflow-x-hidden bg-black font-sans text-slate-900 antialiased">
         {/* 1. 🌟 전역 고정 배경 레이어 (가장 밑바닥) 🌟 */}
         <div className="pointer-events-none fixed inset-0 z-0 flex h-full w-full justify-center bg-black">
